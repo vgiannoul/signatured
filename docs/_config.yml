@@ -64,13 +64,17 @@ back_to_top_text: "Back to top"
 # Navigation structure
 nav_sort: case_sensitive
 
-# Table of contents - show h2 headings in sidebar
+# Table of contents - show h2 and h3 headings in sidebar
 # Applies to all pages unless overridden in frontmatter
+# toc_h_min: 2 (default, starts at H2)
+# toc_h_max: 3 (includes H2 and H3)
 defaults:
   - scope:
       path: ""
     values:
       has_toc: true
+      toc_h_min: 2
+      toc_h_max: 3
 
 # Callouts
 callouts_level: loud

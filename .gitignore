@@ -1,0 +1,43 @@
+# Google Workspace service account credentials
+credentials.json
+*.json
+!go.json
+
+# Environment files
+.env
+.env.local
+
+# Build artifacts
+/bin/
+/dist/
+/signatured
+signatured-*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Logs
+*.log
+audit-*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+
+# Claude docs
+PLAN.md
+PROJECT_SUMMARY.md
+
+# Design assets
+svg_logo/

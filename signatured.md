@@ -1,9 +1,13 @@
-**{{firstName}} {{lastName}}**
+---
+{{firstName}} {{lastName}}
 {{#if jobTitle}}{{jobTitle}}
 {{/if}}{{#if organization}}{{organization}}
+{{/if}}
 
-{{/if}}---
-
-{{#if phone}}📞 {{phone}}
-{{/if}}✉️ {{email}}
-{{#if orgUnit}}🏢 {{orgUnit}}{{/if}}
+{{#if phone}}
+📞 {{phone}}
+{{/if}}
+✉️ {{email}}
+{{#if orgUnit}}
+🏢 {{orgUnit}}
+{{/if}}

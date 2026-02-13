@@ -174,7 +174,7 @@ func TestProcessConditionals(t *testing.T) {
 		{
 			name:     "field missing - remove block",
 			template: "{{#if phone}}Phone: {{phone}}{{/if}}",
-			user: &models.User{
+			user:     &models.User{
 				// Phone is missing
 			},
 			expected: "",

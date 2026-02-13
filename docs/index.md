@@ -125,18 +125,18 @@ Follow these steps to configure signatured for your Google Workspace organizatio
 Create a `signatured.md` file in your project directory:
 
 ```markdown
-**{{firstName}} {{lastName}}**
-{{#if jobTitle}}{{jobTitle}}
-{{/if}}{{#if organization}}{{organization}}
+**{% raw %}{{firstName}}{% endraw %} {% raw %}{{lastName}}{% endraw %}**
+{% raw %}{{#if jobTitle}}{% endraw %}{% raw %}{{jobTitle}}{% endraw %}
+{% raw %}{{/if}}{% endraw %}{% raw %}{{#if organization}}{% endraw %}{% raw %}{{organization}}{% endraw %}
 
-{{/if}}---
+{% raw %}{{/if}}{% endraw %}---
 
-{{#if phone}}📞 {{phone}}
-{{/if}}✉️ {{email}}
-{{#if orgUnit}}🏢 {{orgUnit}}{{/if}}
+{% raw %}{{#if phone}}{% endraw %}📞 {% raw %}{{phone}}{% endraw %}
+{% raw %}{{/if}}{% endraw %}✉️ {% raw %}{{email}}{% endraw %}
+{% raw %}{{#if orgUnit}}{% endraw %}🏢 {% raw %}{{orgUnit}}{% endraw %}{% raw %}{{/if}}{% endraw %}
 ```
 
-**Note**: The `{{#if field}}...{{/if}}` syntax automatically hides sections when a user's profile is missing that field, preventing awkward blank lines in signatures.
+**Note**: The `{% raw %}{{#if field}}{% endraw %}...{% raw %}{{/if}}{% endraw %}` syntax automatically hides sections when a user's profile is missing that field, preventing awkward blank lines in signatures.
 
 ### 8. Test Your Configuration
 
@@ -221,13 +221,13 @@ signatured/                # Project directory
 
 | Placeholder | Description | Source Field |
 |-------------|-------------|--------------|
-| `{{firstName}}` | First name | `name.givenName` |
-| `{{lastName}}` | Last name | `name.familyName` |
-| `{{email}}` | Email address | `primaryEmail` |
-| `{{phone}}` | Phone number (prefers work) | `phones[0].value` |
-| `{{orgUnit}}` | Organizational unit path | `orgUnitPath` |
-| `{{jobTitle}}` | Job title | `organizations[0].title` |
-| `{{organization}}` | Organization name | `organizations[0].name` |
+| `{% raw %}{{firstName}}{% endraw %}` | First name | `name.givenName` |
+| `{% raw %}{{lastName}}{% endraw %}` | Last name | `name.familyName` |
+| `{% raw %}{{email}}{% endraw %}` | Email address | `primaryEmail` |
+| `{% raw %}{{phone}}{% endraw %}` | Phone number (prefers work) | `phones[0].value` |
+| `{% raw %}{{orgUnit}}{% endraw %}` | Organizational unit path | `orgUnitPath` |
+| `{% raw %}{{jobTitle}}{% endraw %}` | Job title | `organizations[0].title` |
+| `{% raw %}{{organization}}{% endraw %}` | Organization name | `organizations[0].name` |
 
 #### Conditional Blocks
 
@@ -235,7 +235,7 @@ The signature manager supports conditional blocks that automatically hide sectio
 
 **Syntax:**
 ```markdown
-{{#if fieldName}}content{{/if}}
+{% raw %}{{#if fieldName}}{% endraw %}content{% raw %}{{/if}}{% endraw %}
 ```
 
 - If `fieldName` has a value → renders `content`
@@ -245,8 +245,8 @@ The signature manager supports conditional blocks that automatically hide sectio
 
 Template:
 ```markdown
-{{#if phone}}📞 {{phone}}
-{{/if}}✉️ {{email}}
+{% raw %}{{#if phone}}{% endraw %}📞 {% raw %}{{phone}}{% endraw %}
+{% raw %}{{/if}}{% endraw %}✉️ {% raw %}{{email}}{% endraw %}
 ```
 
 User WITH phone number:
@@ -266,15 +266,15 @@ Notice: No blank line where the phone would be.
 
 Template:
 ```markdown
-**{{firstName}} {{lastName}}**
-{{#if jobTitle}}{{jobTitle}}
-{{/if}}{{#if organization}}{{organization}}
+**{% raw %}{{firstName}}{% endraw %} {% raw %}{{lastName}}{% endraw %}**
+{% raw %}{{#if jobTitle}}{% endraw %}{% raw %}{{jobTitle}}{% endraw %}
+{% raw %}{{/if}}{% endraw %}{% raw %}{{#if organization}}{% endraw %}{% raw %}{{organization}}{% endraw %}
 
-{{/if}}---
+{% raw %}{{/if}}{% endraw %}---
 
-{{#if phone}}📞 {{phone}}
-{{/if}}✉️ {{email}}
-{{#if orgUnit}}🏢 {{orgUnit}}{{/if}}
+{% raw %}{{#if phone}}{% endraw %}📞 {% raw %}{{phone}}{% endraw %}
+{% raw %}{{/if}}{% endraw %}✉️ {% raw %}{{email}}{% endraw %}
+{% raw %}{{#if orgUnit}}{% endraw %}🏢 {% raw %}{{orgUnit}}{% endraw %}{% raw %}{{/if}}{% endraw %}
 ```
 
 Full profile user:
@@ -305,13 +305,13 @@ Jane Smith
 
    ✅ Good:
    ```markdown
-   {{#if phone}}📞 {{phone}}
-   {{/if}}
+   {% raw %}{{#if phone}}{% endraw %}📞 {% raw %}{{phone}}{% endraw %}
+   {% raw %}{{/if}}{% endraw %}
    ```
 
    ❌ Bad:
    ```markdown
-   📞 {{phone}}
+   📞 {% raw %}{{phone}}{% endraw %}
    ```
    *This leaves "📞 " in the signature even when phone is missing*
 
@@ -319,45 +319,45 @@ Jane Smith
 
    ✅ Good:
    ```markdown
-   {{#if phone}}📞 {{phone}}
-   {{/if}}✉️ {{email}}
+   {% raw %}{{#if phone}}{% endraw %}📞 {% raw %}{{phone}}{% endraw %}
+   {% raw %}{{/if}}{% endraw %}✉️ {% raw %}{{email}}{% endraw %}
    ```
 
    ❌ Bad:
    ```markdown
-   {{#if phone}}📞 {{phone}}{{/if}}
+   {% raw %}{{#if phone}}{% endraw %}📞 {% raw %}{{phone}}{% endraw %}{% raw %}{{/if}}{% endraw %}
 
-   ✉️ {{email}}
+   ✉️ {% raw %}{{email}}{% endraw %}
    ```
    *This leaves a blank line when phone is missing*
 
 3. **Required fields don't need conditionals** - Fields like `firstName`, `lastName`, and `email` are typically always present:
 
    ```markdown
-   **{{firstName}} {{lastName}}**
-   ✉️ {{email}}
+   **{% raw %}{{firstName}}{% endraw %} {% raw %}{{lastName}}{% endraw %}**
+   ✉️ {% raw %}{{email}}{% endraw %}
    ```
 
 4. **Conditionals work with markdown** - You can use markdown formatting inside conditional blocks:
 
    ```markdown
-   {{#if jobTitle}}**Job:** *{{jobTitle}}*
-   {{/if}}
+   {% raw %}{{#if jobTitle}}{% endraw %}**Job:** *{% raw %}{{jobTitle}}{% endraw %}*
+   {% raw %}{{/if}}{% endraw %}
    ```
 
 **Common Patterns:**
 
 Contact information block:
 ```markdown
-{{#if phone}}📞 {{phone}}
-{{/if}}✉️ {{email}}
-{{#if website}}🌐 {{website}}{{/if}}
+{% raw %}{{#if phone}}{% endraw %}📞 {% raw %}{{phone}}{% endraw %}
+{% raw %}{{/if}}{% endraw %}✉️ {% raw %}{{email}}{% endraw %}
+{% raw %}{{#if website}}{% endraw %}🌐 {% raw %}{{website}}{% endraw %}{% raw %}{{/if}}{% endraw %}
 ```
 
 Job title and company:
 ```markdown
-{{#if jobTitle}}{{jobTitle}}{{#if organization}} at {{organization}}{{/if}}
-{{/if}}
+{% raw %}{{#if jobTitle}}{% endraw %}{% raw %}{{jobTitle}}{% endraw %}{% raw %}{{#if organization}}{% endraw %} at {% raw %}{{organization}}{% endraw %}{% raw %}{{/if}}{% endraw %}
+{% raw %}{{/if}}{% endraw %}
 ```
 
 This prevents awkward blank lines in signatures for users with incomplete profile data.
@@ -586,7 +586,7 @@ Deploy as a Cloud Run job triggered by Cloud Scheduler for automated updates.
 **Solution**:
 1. Check user profiles in Admin Console
 2. Ensure fields (phone, job title, etc.) are populated
-3. Use `{{#if field}}...{{/if}}` conditionals to gracefully hide missing fields (see Template Syntax section)
+3. Use `{% raw %}{{#if field}}{% endraw %}...{% raw %}{{/if}}{% endraw %}` conditionals to gracefully hide missing fields (see Template Syntax section)
 
 ## Security
 

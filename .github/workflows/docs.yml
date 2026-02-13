@@ -30,6 +30,12 @@ jobs:
 
       - name: Sync documentation files
         run: |
+          # Function to escape handlebars for Jekyll
+          escape_handlebars() {
+            # Escape {{ and }} by wrapping them in {% raw %} tags
+            sed 's/{{/{% raw %}{{/g; s/}}/}}{% endraw %}/g'
+          }
+
           # Sync README.md to docs/index.md with frontmatter
           cat > docs/index.md <<'EOF'
           ---
@@ -41,7 +47,7 @@ jobs:
           ---
 
           EOF
-          tail -n +8 README.md >> docs/index.md
+          tail -n +8 README.md | escape_handlebars >> docs/index.md
 
           # Sync CHANGELOG.md to docs/changelog.md with frontmatter
           cat > docs/changelog.md <<'EOF'
@@ -54,7 +60,7 @@ jobs:
           ---
 
           EOF
-          cat CHANGELOG.md >> docs/changelog.md
+          cat CHANGELOG.md | escape_handlebars >> docs/changelog.md
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

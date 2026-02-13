@@ -221,6 +221,8 @@ signatured/                # Project directory
 | `{{jobTitle}}` | Job title | `organizations[0].title` |
 | `{{organization}}` | Organization name | `organizations[0].name` |
 
+**Note**: The top-level organizational unit (`/`) is treated as empty when using conditionals, so `{{#if orgUnit}}` will hide content for users in the root organization.
+
 #### Conditional Blocks
 
 The signature manager supports conditional blocks that automatically hide sections when user data is missing, preventing awkward blank lines in signatures.

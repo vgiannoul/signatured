@@ -89,6 +89,11 @@ func (t *Template) processConditionals(user *models.User) string {
 			return ""
 		}
 
+		// Special case: treat top-level orgUnit ("/") as empty
+		if fieldName == "orgUnit" && value == "/" {
+			return ""
+		}
+
 		// Field has a value, keep the inner content
 		return innerContent
 	})

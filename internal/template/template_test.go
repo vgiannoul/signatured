@@ -205,6 +205,22 @@ func TestProcessConditionals(t *testing.T) {
 			},
 			expected: "{{firstName}} {{lastName}}",
 		},
+		{
+			name:     "orgUnit top-level / treated as empty",
+			template: "{{#if orgUnit}}🏢 {{orgUnit}}{{/if}}",
+			user: &models.User{
+				OrgUnit: "/",
+			},
+			expected: "",
+		},
+		{
+			name:     "orgUnit with actual path shown",
+			template: "{{#if orgUnit}}🏢 {{orgUnit}}{{/if}}",
+			user: &models.User{
+				OrgUnit: "/Engineering",
+			},
+			expected: "🏢 {{orgUnit}}",
+		},
 	}
 
 	for _, tt := range tests {

@@ -1,23 +1,82 @@
-# GitHub Pages configuration
+# GitHub Pages configuration for signatured
 title: signatured
-description: Google Workspace Signature Manager - Single-binary CLI tool to manage email signatures for Google Workspace organization members
-logo: /assets/logo.svg
-theme: jekyll-theme-cayman
-show_downloads: true
-github:
-  repository_url: https://github.com/vgiannoul/signatured
-  zip_url: https://github.com/vgiannoul/signatured/releases/latest/download/signatured-darwin-arm64
-  tar_url: https://github.com/vgiannoul/signatured/releases/latest/download/signatured-linux-amd64
+description: Google Workspace Signature Manager
+baseurl: "/signatured"
+url: "https://vgiannoul.github.io"
+
+# Theme
+remote_theme: just-the-docs/just-the-docs
+
+# Logo
+logo: "/assets/logo.svg"
+
+# Color scheme
+color_scheme: light
+
+# Search
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 3
+  preview_words_before: 5
+  preview_words_after: 10
+  tokenizer_separator: /[\s/]+/
+  rel_url: true
+  button: false
+
+# Mermaid diagrams
+mermaid:
+  version: "9.1.6"
+
+# Heading anchor links
+heading_anchors: true
+
+# Aux links for the upper right navigation
+aux_links:
+  "GitHub Repository":
+    - "https://github.com/vgiannoul/signatured"
+  "Download Latest Release":
+    - "https://github.com/vgiannoul/signatured/releases/latest"
+
+# Makes Aux links open in a new tab
+aux_links_new_tab: true
+
+# Footer content
+footer_content: "Copyright &copy; 2026 Vasilis Giannoulis. Distributed under the <a href=\"https://github.com/vgiannoul/signatured/blob/main/LICENSE\">MIT License</a>."
+
+# Footer "Edit this page on GitHub" link
+gh_edit_link: true
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: "https://github.com/vgiannoul/signatured"
+gh_edit_branch: "main"
+gh_edit_source: docs
+gh_edit_view_mode: "edit"
+
+# Back to top link
+back_to_top: true
+back_to_top_text: "Back to top"
+
+# Navigation structure
+nav_sort: case_sensitive
+
+# Callouts
+callouts_level: loud
+callouts:
+  warning:
+    title: Warning
+    color: red
+  note:
+    title: Note
+    color: blue
+  important:
+    title: Important
+    color: yellow
 
 # Plugins
 plugins:
-  - jekyll-relative-links
   - jekyll-seo-tag
-
-# Relative links settings
-relative_links:
-  enabled: true
-  collections: true
+  - jekyll-github-metadata
+  - jekyll-include-cache
 
 # Exclude from processing
 exclude:
@@ -25,9 +84,22 @@ exclude:
   - Gemfile.lock
   - node_modules
   - vendor
+  - README.md
 
 # Markdown settings
 markdown: kramdown
 kramdown:
   input: GFM
   syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+# Compression
+compress_html:
+  clippings: all
+  comments: all
+  endings: all
+  startings: []
+  blanklines: false
+  profile: false

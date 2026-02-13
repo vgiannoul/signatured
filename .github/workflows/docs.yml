@@ -6,6 +6,7 @@ on:
     paths:
       - 'docs/**'
       - 'README.md'
+      - 'CHANGELOG.md'
       - '.github/workflows/docs.yml'
 
 permissions:
@@ -26,6 +27,34 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
         with:
           persist-credentials: false
+
+      - name: Sync documentation files
+        run: |
+          # Sync README.md to docs/index.md with frontmatter
+          cat > docs/index.md <<'EOF'
+          ---
+          layout: default
+          title: Home
+          nav_order: 1
+          description: "Google Workspace Signature Manager - Single-binary CLI tool to manage email signatures for Google Workspace organization members"
+          permalink: /
+          ---
+
+          EOF
+          tail -n +8 README.md >> docs/index.md
+
+          # Sync CHANGELOG.md to docs/changelog.md with frontmatter
+          cat > docs/changelog.md <<'EOF'
+          ---
+          layout: default
+          title: Changelog
+          nav_order: 99
+          description: "Release history and version changelog for signatured"
+          permalink: /changelog/
+          ---
+
+          EOF
+          cat CHANGELOG.md >> docs/changelog.md
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

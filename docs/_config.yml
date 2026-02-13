@@ -10,8 +10,8 @@ remote_theme: just-the-docs/just-the-docs
 # Logo
 logo: "/assets/logo.svg"
 
-# Color scheme
-color_scheme: light
+# Color scheme - custom scheme with logo colors
+color_scheme: signatured
 
 # Search
 search_enabled: true
@@ -44,6 +44,11 @@ aux_links_new_tab: true
 # Footer content
 footer_content: "Copyright &copy; 2026 Vasilis Giannoulis. Distributed under the <a href=\"https://github.com/vgiannoul/signatured/blob/main/LICENSE\">MIT License</a>."
 
+# Disable default Just the Docs footer
+# Custom footer will be added via _includes/footer_custom.html
+just_the_docs:
+  collections: {}
+
 # Footer "Edit this page on GitHub" link
 gh_edit_link: true
 gh_edit_link_text: "Edit this page on GitHub"
@@ -58,6 +63,14 @@ back_to_top_text: "Back to top"
 
 # Navigation structure
 nav_sort: case_sensitive
+
+# Table of contents - show h2 headings in sidebar
+# Applies to all pages unless overridden in frontmatter
+defaults:
+  - scope:
+      path: ""
+    values:
+      has_toc: true
 
 # Callouts
 callouts_level: loud

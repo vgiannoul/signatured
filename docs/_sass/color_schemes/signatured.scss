@@ -1,0 +1,81 @@
+// Custom color scheme for signatured
+// Uses the signature yellow color #FBBC04 from the logo
+
+// Primary color (logo yellow)
+$link-color: #FBBC04;
+$btn-primary-color: #FBBC04;
+
+// Accent colors
+$purple-000: #fef9f3;
+$purple-100: #fef3e0;
+$purple-200: #fde6b8;
+$purple-300: #FBBC04;
+
+// Link colors
+$link-color: #FBBC04;
+
+// Body styles
+$body-background-color: $white;
+$body-heading-color: $grey-dk-300;
+$body-text-color: $grey-dk-100;
+$base-button-color: #f7f7f7;
+
+// Code
+$code-background-color: $grey-lt-000;
+$code-linenumber-color: $grey-dk-000;
+
+// Sidebar
+$sidebar-color: $grey-lt-000;
+$nav-child-link-color: $grey-dk-100;
+$search-background-color: $white;
+$table-background-color: $white;
+$feedback-color: darken($sidebar-color, 3%);
+
+// Buttons
+$btn-primary-color: #FBBC04;
+
+// Focus color
+$focus-color: #FBBC04;
+
+// Navigation active state
+$nav-link-color: $body-text-color;
+
+// Override link hover
+a {
+  &:hover,
+  &.active {
+    color: darken(#FBBC04, 10%);
+  }
+}
+
+// Navigation item active state
+.nav-list-item .nav-list-link.active {
+  font-weight: 600;
+  color: #FBBC04;
+}
+
+// Sidebar title
+.site-title {
+  color: $grey-dk-300;
+  &:hover {
+    background-image: linear-gradient(to bottom, rgba(#FBBC04, 0.2), rgba(#FBBC04, 0.2));
+  }
+}
+
+// Buttons
+.btn-primary {
+  background-color: #FBBC04;
+  color: $white;
+
+  &:hover,
+  &:active,
+  &:focus {
+    background-color: darken(#FBBC04, 7%);
+  }
+}
+
+// Search highlight
+mark,
+.search-result-highlight {
+  background-color: rgba(#FBBC04, 0.3);
+}

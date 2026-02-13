@@ -1,3 +1,11 @@
+---
+layout: default
+title: Home
+nav_order: 1
+description: "Google Workspace Signature Manager - Single-binary CLI tool to manage email signatures for Google Workspace organization members"
+permalink: /
+---
+
 <div align="center">
   <img src="assets/logo.svg" alt="signatured logo" width="400">
 

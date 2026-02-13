@@ -1,15 +1,15 @@
-<svg width="300" height="80" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="200" height="50" viewBox="0 10 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Signature pen stroke icon -->
   <g>
     <!-- Pen/signature element -->
     <path
       d="M 15 35 Q 20 30, 25 35 T 35 35"
       stroke="#FBBC04"
-      stroke-width="4"
+      stroke-width="3"
       stroke-linecap="round"
       fill="none"
     />
-    <circle cx="12" cy="35" r="3" fill="#FBBC04" />
+    <circle cx="8" cy="35" r="3" fill="#FBBC04" />
   </g>
 
   <!-- Text: signatured (light color for dark background) -->

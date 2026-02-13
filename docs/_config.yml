@@ -1,0 +1,33 @@
+# GitHub Pages configuration
+title: signatured
+description: Google Workspace Signature Manager - Single-binary CLI tool to manage email signatures for Google Workspace organization members
+logo: /assets/logo.svg
+theme: jekyll-theme-cayman
+show_downloads: true
+github:
+  repository_url: https://github.com/vgiannoul/signatured
+  zip_url: https://github.com/vgiannoul/signatured/releases/latest/download/signatured-darwin-arm64
+  tar_url: https://github.com/vgiannoul/signatured/releases/latest/download/signatured-linux-amd64
+
+# Plugins
+plugins:
+  - jekyll-relative-links
+  - jekyll-seo-tag
+
+# Relative links settings
+relative_links:
+  enabled: true
+  collections: true
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+
+# Markdown settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge

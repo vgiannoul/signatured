@@ -2,18 +2,18 @@ package models
 
 // User represents a Google Workspace user with fields needed for signature rendering.
 type User struct {
-	Email           string
-	FirstName       string
-	LastName        string
-	JobTitle        string
-	Organization    string
-	Phone           string
-	OrgUnit         string
-	PhoneMobile     string
-	CompanyWebsite  string
-	CompanyLogo     string
-	CompanyPhone    string
-	CompanyAddress  string
+	Email          string
+	FirstName      string
+	LastName       string
+	JobTitle       string
+	Organization   string
+	Phone          string
+	OrgUnit        string
+	PhoneMobile    string
+	CompanyWebsite string
+	CompanyLogo    string
+	CompanyPhone   string
+	CompanyAddress string
 }
 
 // PlaceholderData returns a map of placeholder keys to their values for template rendering.

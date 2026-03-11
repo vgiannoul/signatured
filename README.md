@@ -112,9 +112,9 @@ Follow these steps to configure signatured for your Google Workspace organizatio
    ```
 7. Click **Authorize**
 
-### 7. Create Signature Template
+### 7. Create Signature Template (Optional)
 
-Create a `signatured.md` file in your project directory:
+The default template is located at `templates/signatured.md`. You can customize it or create your own:
 
 ```markdown
 **{{firstName}} {{lastName}}**
@@ -130,9 +130,50 @@ Create a `signatured.md` file in your project directory:
 
 **Note**: The `{{#if field}}...{{/if}}` syntax automatically hides sections when a user's profile is missing that field, preventing awkward blank lines in signatures.
 
-### 8. Test Your Configuration
+### 8. Configure Environment
 
-Validate the template:
+Copy `.env.example` to `.env` and configure your settings:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` with your values:
+
+```bash
+# Google Workspace Signature Manager Configuration
+
+# Admin user email for domain-wide delegation
+IMPERSONATE_USER=admin@example.com
+
+# Company-wide signature configuration
+COMPANY_WEBSITE=https://example.com
+COMPANY_LOGO=https://example.com/logo.png
+COMPANY_PHONE=+1-555-0100
+COMPANY_ADDRESS=123 Main St, City, State 12345
+```
+
+**IMPORTANT**: Never commit `.env` to version control! It's already in `.gitignore`.
+
+### 9. Verify Setup
+
+After completing setup, verify you have:
+
+```
+signatured/                # Project directory
+├── signatured             # Binary (executable)
+├── credentials.json       # Service account key (600 permissions)
+├── .env                   # Environment configuration (gitignored)
+├── .env.example           # Example environment configuration
+├── templates/             # Signature templates
+│   ├── signatured.md     # Default simple template
+│   └── html-table.md     # HTML table template
+└── .gitignore             # Excludes credentials.json and .env
+```
+
+### 10. Validate Template
+
+Test that your template is valid:
 
 ```bash
 ./signatured validate
@@ -140,11 +181,11 @@ Validate the template:
 
 Expected output:
 ```
-time=2026-02-13T10:00:00.000+02:00 level=INFO msg="Validating template" path=./signatured.md
+time=2026-02-13T10:00:00.000+02:00 level=INFO msg="Validating template" path=./templates/signatured.md
 time=2026-02-13T10:00:00.001+02:00 level=INFO msg="Template is valid"
 ```
 
-### 9. Run Dry Run Test
+### 11. Run Dry Run Test
 
 Test with a single user (replace with your emails):
 
@@ -168,7 +209,7 @@ Summary:
   Duration: 1.2s
 ```
 
-### 10. Apply to Single User
+### 12. Apply to Single User
 
 Remove `--dry-run` to actually apply:
 
@@ -178,14 +219,14 @@ Remove `--dry-run` to actually apply:
   --impersonate admin@example.com
 ```
 
-### 11. Verify Signature Update
+### 13. Verify Signature Update
 
 1. Open Gmail as `testuser@example.com`
 2. Click **Settings** (gear icon)
 3. Scroll to **Signature** section
 4. Verify signature is updated correctly
 
-### 12. Roll Out to Organization
+### 14. Roll Out to Organization
 
 Once verified, apply to all users:
 
@@ -195,31 +236,33 @@ Once verified, apply to all users:
   --impersonate admin@example.com
 ```
 
-### Setup Checklist
-
-After completing setup, verify you have:
-
-```
-signatured/                # Project directory
-├── signatured             # Binary (executable)
-├── credentials.json       # Service account key (600 permissions)
-├── signatured.md          # Signature template
-└── .gitignore             # Excludes credentials.json
-```
-
 ### Template Syntax
 
 #### Placeholders
+
+##### User-Specific Fields
 
 | Placeholder | Description | Source Field |
 |-------------|-------------|--------------|
 | `{{firstName}}` | First name | `name.givenName` |
 | `{{lastName}}` | Last name | `name.familyName` |
 | `{{email}}` | Email address | `primaryEmail` |
-| `{{phone}}` | Phone number (prefers work) | `phones[0].value` |
+| `{{phone}}` | Phone number (prefers work) | `phones[type=work].value` |
+| `{{phoneMobile}}` | Mobile phone number | `phones[type=mobile].value` |
 | `{{orgUnit}}` | Organizational unit path | `orgUnitPath` |
 | `{{jobTitle}}` | Job title | `organizations[0].title` |
 | `{{organization}}` | Organization name | `organizations[0].name` |
+
+##### Company-Wide Fields
+
+These fields are set via `.env` file and apply to all users:
+
+| Placeholder | Description | Environment Variable |
+|-------------|-------------|---------------------|
+| `{{companyWebsite}}` | Company website URL | `COMPANY_WEBSITE` |
+| `{{companyLogo}}` | Company logo URL | `COMPANY_LOGO` |
+| `{{companyPhone}}` | Company phone number | `COMPANY_PHONE` |
+| `{{companyAddress}}` | Company address | `COMPANY_ADDRESS` |
 
 **Note**: The top-level organizational unit (`/`) is treated as empty when using conditionals, so `{{#if orgUnit}}` will hide content for users in the root organization.
 
@@ -356,6 +399,26 @@ Job title and company:
 
 This prevents awkward blank lines in signatures for users with incomplete profile data.
 
+#### Built-in Templates
+
+The project includes pre-built templates in the `templates/` directory:
+
+- **signatured.md** (default) - Simple markdown-based template
+- **templates/html-table.md** - Professional HTML table layout with company branding
+
+To use a built-in HTML template, configure company settings in `.env` and run:
+
+```bash
+./signatured apply \
+  --all \
+  --impersonate admin@example.com \
+  --template ./templates/html-table.md
+```
+
+The company information (`COMPANY_WEBSITE`, `COMPANY_LOGO`, etc.) from your `.env` file will be automatically applied to all user signatures.
+
+You can also create custom templates by combining markdown formatting with HTML for more advanced layouts.
+
 ## Usage
 
 ### Validate Template
@@ -399,13 +462,24 @@ Test that your template is valid:
   --dry-run
 ```
 
+### Custom Template
+
+Use a different template file:
+
+```bash
+./signatured apply \
+  --user alice@example.com \
+  --impersonate admin@example.com \
+  --template ./templates/html-table.md
+```
+
 ### Custom Paths
 
 ```bash
 ./signatured apply \
   --user alice@example.com \
   --impersonate admin@example.com \
-  --template ./custom-signatured.md \
+  --template ./custom-template.md \
   --credentials ./path/to/credentials.json
 ```
 
@@ -435,10 +509,21 @@ Adjust the number of concurrent API calls (default: 10):
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--template` | `./signatured.md` | Path to signature template |
+| `--template` | `./templates/signatured.md` | Path to signature template |
 | `--credentials` | `./credentials.json` | Path to service account key |
 | `--impersonate` | *(required)* | Admin user for domain-wide delegation |
 | `--verbose` | `false` | Enable debug logging |
+
+### Environment Variables
+
+Company-wide configuration (set in `.env` file):
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `COMPANY_WEBSITE` | Company website URL | `https://example.com` |
+| `COMPANY_LOGO` | Company logo image URL | `https://example.com/logo.png` |
+| `COMPANY_PHONE` | Company phone number | `+1-555-0100` |
+| `COMPANY_ADDRESS` | Company address | `123 Main St, City, State` |
 
 ### Apply Command Flags
 
@@ -584,10 +669,11 @@ Deploy as a Cloud Run job triggered by Cloud Scheduler for automated updates.
 
 ## Security
 
-### Credentials Storage
+### Credentials and Configuration Storage
 
-- Never commit `credentials.json` to version control
-- Store in secure location with restricted permissions: `chmod 600 credentials.json`
+- Never commit `credentials.json` or `.env` to version control
+- Store credentials in secure location with restricted permissions: `chmod 600 credentials.json`
+- Restrict `.env` file permissions: `chmod 600 .env`
 - For production, use secret management (GCP Secret Manager, Vault, etc.)
 
 ### Service Account Key Rotation
@@ -616,6 +702,8 @@ All operations are logged with structured logs. Redirect to file for audit trail
 
 - [ ] `credentials.json` has restricted permissions (`chmod 600`)
 - [ ] `credentials.json` is in `.gitignore`
+- [ ] `.env` has restricted permissions (`chmod 600`)
+- [ ] `.env` is in `.gitignore`
 - [ ] Service account uses minimal required scopes
 - [ ] Domain-wide delegation is limited to signature management scopes
 - [ ] Service account keys rotated quarterly
@@ -677,10 +765,10 @@ GOOS=windows GOARCH=amd64 go build -o dist/signatured-windows-amd64.exe ./cmd/si
 ```
 signatured/
 ├── cmd/
-│   └── signatured/    # Main CLI application
+│   └── signatured/          # Main CLI application
 │       └── main.go
 ├── internal/
-│   ├── google/               # Google API clients
+│   ├── google/              # Google API clients
 │   │   ├── auth.go          # Authentication
 │   │   ├── directory.go     # Directory API
 │   │   └── gmail.go         # Gmail API
@@ -689,12 +777,16 @@ signatured/
 │   └── template/            # Template engine
 │       ├── template.go
 │       └── template_test.go
-├── signatured.md             # Signature template
+├── templates/               # Signature templates
+│   ├── signatured.md        # Default simple template
+│   ├── html-table.md        # HTML table template
+│   └── README.md            # Template documentation
+├── .env                     # Environment config (gitignored)
+├── .env.example             # Example environment config
 ├── credentials.json         # Service account key (gitignored)
 ├── go.mod
 ├── go.sum
-├── README.md
-└── PLAN.md                  # Design documentation
+└── README.md
 ```
 
 ## License

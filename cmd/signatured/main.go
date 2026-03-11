@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"github.com/vgiannoul/signatured/internal/google"
 	"github.com/vgiannoul/signatured/internal/models"
@@ -32,6 +33,9 @@ var (
 )
 
 func main() {
+	// Load .env file if it exists (ignore errors if file doesn't exist)
+	_ = godotenv.Load()
+
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
@@ -41,14 +45,17 @@ var rootCmd = &cobra.Command{
 	Use:   "signatured",
 	Short: "Manage Google Workspace email signatures",
 	Long: `A CLI tool to manage email signatures for Google Workspace organization members.
-Reads signature template from signatured.md, replaces placeholders with user data,
-and applies signatures via Google Workspace APIs.`,
+Reads signature template (default: templates/signatured.md), replaces placeholders with user data,
+and applies signatures via Google Workspace APIs.
+
+Templates support handlebars-style placeholders and can be customized using the --template flag.
+Company-wide configuration is loaded from .env file (COMPANY_WEBSITE, COMPANY_LOGO, COMPANY_PHONE, COMPANY_ADDRESS).`,
 	Version: version,
 }
 
 func init() {
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&templatePath, "template", "./signatured.md", "Path to signature template file")
+	rootCmd.PersistentFlags().StringVar(&templatePath, "template", "./templates/signatured.md", "Path to signature template file")
 	rootCmd.PersistentFlags().StringVar(&credentialsPath, "credentials", "./credentials.json", "Path to service account credentials")
 	rootCmd.PersistentFlags().StringVar(&impersonateUser, "impersonate", "", "User email to impersonate for domain-wide delegation (required)")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Enable verbose logging")
@@ -136,8 +143,16 @@ or --all for the entire domain.`,
 
 		logger.Info("Authentication successful")
 
+		// Load company configuration from environment variables
+		companyConfig := google.CompanyConfig{
+			Website: os.Getenv("COMPANY_WEBSITE"),
+			Logo:    os.Getenv("COMPANY_LOGO"),
+			Phone:   os.Getenv("COMPANY_PHONE"),
+			Address: os.Getenv("COMPANY_ADDRESS"),
+		}
+
 		// Create API clients
-		directoryClient := google.NewDirectoryClient(client.DirectoryService(), extractDomain(impersonateUser))
+		directoryClient := google.NewDirectoryClient(client.DirectoryService(), extractDomain(impersonateUser), companyConfig)
 		gmailClient := google.NewGmailClient(credentialsPath)
 
 		// Fetch users based on target

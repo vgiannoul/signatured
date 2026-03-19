@@ -1,3 +1,11 @@
+---
+layout: default
+title: Changelog
+nav_order: 99
+description: "Version history and release notes for signatured"
+permalink: /changelog/
+---
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -17,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `IMPERSONATE_USER` - Set default admin user for domain-wide delegation
   - `VERBOSE` - Enable verbose logging by default
   - Command-line flags take precedence over environment variables
-- Comprehensive environment configuration documentation ([docs/ENV_CONFIG.md](docs/ENV_CONFIG.md))
+- Comprehensive environment configuration documentation ([Environment Configuration Guide](env-config))
 - Updated `.env.example` with detailed comments and examples
 
 ### Fixed
@@ -27,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Builds without ldflags show "dev" version instead of outdated hardcoded version
 - Cleaned up documentation to remove customer-specific references
 
-## [1.0.1] - 2026-03-15
+## [1.0.1] - 2026-03-19
 
 ### Added
 - **Google Cloud Storage (GCS) template support**
@@ -37,13 +45,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Uses Application Default Credentials (same service account as Workspace APIs)
   - Minimal permissions required: `roles/storage.objectViewer` on template bucket
 - New dependency: `cloud.google.com/go/storage@v1.61.3`
-- Comprehensive GCS documentation ([docs/GCS_SUPPORT.md](docs/GCS_SUPPORT.md))
+- Comprehensive GCS documentation ([GCS Support Guide](gcs-support))
   - Setup instructions
   - IAM permission requirements
   - Usage examples
   - Troubleshooting guide
   - Security best practices
-- Unit tests for GCS functionality ([internal/template/gcs_test.go](internal/template/gcs_test.go))
+- Unit tests for GCS functionality
   - URL detection tests
   - URL parsing tests for all supported formats
   - 74.7% code coverage in template package
@@ -65,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - All documentation updated to reference new filename
 
 ### Added
-- Conditional syntax support (`{{#if field}}...{{/if}}`) to hide sections when user data is missing
+- Conditional syntax support (`{% raw %}{{#if field}}...{{/if}}{% endraw %}`) to hide sections when user data is missing
 - Per-user Gmail API authentication for proper domain-wide delegation
 - Comprehensive test coverage for conditional processing
 - Detailed conditional syntax documentation in README

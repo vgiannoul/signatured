@@ -10,6 +10,7 @@
 
 - Single static binary (no runtime dependencies)
 - Markdown-based signature templates with placeholder support
+- Template loading from local files or Google Cloud Storage
 - Batch signature updates for entire organization or specific OUs
 - OAuth 2.0 service account authentication with domain-wide delegation
 - Rate limiting and automatic retry with exponential backoff
@@ -98,7 +99,6 @@ Follow these steps to configure signatured for your Google Workspace organizatio
 
 1. In the service account details page
 2. Copy the **Client ID** (numeric, e.g., `123456789012345678901`)
-
 ### 6. Configure Domain-Wide Delegation
 
 1. Navigate to [Google Workspace Admin Console](https://admin.google.com)
@@ -143,8 +143,18 @@ Then edit `.env` with your values:
 ```bash
 # Google Workspace Signature Manager Configuration
 
+# Path to signature template (supports local files and GCS URLs)
+TEMPLATE_PATH=./templates/signatured.md
+# Or use GCS: TEMPLATE_PATH=gs://my-bucket/templates/signatured.md
+
+# Path to service account credentials JSON file
+CREDENTIALS_PATH=./credentials.json
+
 # Admin user email for domain-wide delegation
 IMPERSONATE_USER=admin@example.com
+
+# Enable verbose logging (true/false)
+VERBOSE=false
 
 # Company-wide signature configuration
 COMPANY_WEBSITE=https://example.com
@@ -154,6 +164,12 @@ COMPANY_ADDRESS=123 Main St, City, State 12345
 ```
 
 **IMPORTANT**: Never commit `.env` to version control! It's already in `.gitignore`.
+
+**Environment Variable Precedence**:
+- Command-line flags override environment variables
+- Environment variables override hardcoded defaults
+- Example: `./signatured apply --all` uses `TEMPLATE_PATH` from `.env`
+- Example: `./signatured apply --all --template custom.md` uses `custom.md` (flag overrides `.env`)
 
 ### 9. Verify Setup
 
@@ -473,6 +489,34 @@ Use a different template file:
   --template ./templates/html-table.md
 ```
 
+### Google Cloud Storage Templates
+
+Load templates from Google Cloud Storage buckets:
+
+```bash
+# Using gs:// URL
+./signatured apply \
+  --all \
+  --impersonate admin@example.com \
+  --template gs://my-org-signatures/templates/signatured.md
+
+# Using HTTPS URL
+./signatured apply \
+  --all \
+  --impersonate admin@example.com \
+  --template https://storage.googleapis.com/my-org-signatures/templates/signatured.md
+```
+
+**Requirements:**
+- Service account needs `roles/storage.objectViewer` permission on the bucket
+- Uses Application Default Credentials (same credentials as Workspace APIs)
+
+**Grant bucket access:**
+```bash
+gsutil iam ch serviceAccount:signatured@project.iam.gserviceaccount.com:objectViewer \
+  gs://my-org-signatures
+```
+
 ### Custom Paths
 
 ```bash
@@ -509,21 +553,32 @@ Adjust the number of concurrent API calls (default: 10):
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--template` | `./templates/signatured.md` | Path to signature template |
+| `--template` | `./templates/signatured.md` | Path to signature template (local file or GCS URL: `gs://bucket/path` or `https://storage.googleapis.com/bucket/path`) |
 | `--credentials` | `./credentials.json` | Path to service account key |
 | `--impersonate` | *(required)* | Admin user for domain-wide delegation |
 | `--verbose` | `false` | Enable debug logging |
 
 ### Environment Variables
 
-Company-wide configuration (set in `.env` file):
+Configuration via `.env` file (automatically loaded):
 
+#### CLI Defaults
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `TEMPLATE_PATH` | Default template path (local or GCS) | `./templates/signatured.md` | `gs://my-bucket/templates/signatured.md` |
+| `CREDENTIALS_PATH` | Path to service account credentials | `./credentials.json` | `/secrets/credentials.json` |
+| `IMPERSONATE_USER` | Admin user for domain-wide delegation | *(none)* | `admin@example.com` |
+| `VERBOSE` | Enable verbose logging | `false` | `true` |
+
+#### Company-Wide Settings
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `COMPANY_WEBSITE` | Company website URL | `https://example.com` |
 | `COMPANY_LOGO` | Company logo image URL | `https://example.com/logo.png` |
 | `COMPANY_PHONE` | Company phone number | `+1-555-0100` |
 | `COMPANY_ADDRESS` | Company address | `123 Main St, City, State` |
+
+**Note**: Command-line flags take precedence over environment variables.
 
 ### Apply Command Flags
 

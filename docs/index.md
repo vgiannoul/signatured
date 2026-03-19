@@ -18,6 +18,8 @@ permalink: /
 
 - Single static binary (no runtime dependencies)
 - Markdown-based signature templates with placeholder support
+- **Template loading from local files or Google Cloud Storage** ([GCS Support](gcs-support))
+- **Environment variable configuration** for CLI defaults ([.env Configuration](env-config))
 - Batch signature updates for entire organization or specific OUs
 - OAuth 2.0 service account authentication with domain-wide delegation
 - Rate limiting and automatic retry with exponential backoff
@@ -193,9 +195,51 @@ Remove `--dry-run` to actually apply:
 3. Scroll to **Signature** section
 4. Verify signature is updated correctly
 
-### 12. Roll Out to Organization
+### 12. Configure Environment Variables (Optional)
+
+For easier usage, set default values in a `.env` file:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your settings:
+
+```bash
+# CLI defaults
+TEMPLATE_PATH=./templates/signatured.md
+CREDENTIALS_PATH=./credentials.json
+IMPERSONATE_USER=admin@example.com
+VERBOSE=false
+
+# Company branding (for templates)
+COMPANY_WEBSITE=https://example.com
+COMPANY_LOGO=https://example.com/logo.png
+COMPANY_PHONE=+1-555-0100
+COMPANY_ADDRESS=123 Main St, City, State
+```
+
+Now you can run commands without specifying flags:
+
+```bash
+# Without .env - need all flags
+./signatured apply --all --impersonate admin@example.com --template ./signatured.md
+
+# With .env - uses defaults
+./signatured apply --all
+```
+
+See [Environment Configuration Guide](env-config) for details.
+
+### 13. Roll Out to Organization
 
 Once verified, apply to all users:
+
+```bash
+./signatured apply --all
+```
+
+Or with explicit flags:
 
 ```bash
 ./signatured apply \
@@ -435,16 +479,42 @@ Adjust the number of concurrent API calls (default: 10):
   --concurrency 5
 ```
 
+### Google Cloud Storage Templates
+
+Load templates from GCS buckets:
+
+```bash
+# Using gs:// URL
+./signatured apply \
+  --all \
+  --impersonate admin@example.com \
+  --template gs://my-org-signatures/templates/signatured.md
+
+# Using HTTPS URL
+./signatured apply \
+  --all \
+  --impersonate admin@example.com \
+  --template https://storage.googleapis.com/my-org-signatures/templates/signatured.md
+```
+
+**Requirements:**
+- Service account needs `roles/storage.objectViewer` on the bucket
+- Uses same credentials as Workspace APIs
+
+See [GCS Support Guide](gcs-support) for setup instructions.
+
 ## Command Reference
 
 ### Global Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--template` | `./signatured.md` | Path to signature template |
+| `--template` | `./templates/signatured.md` | Path to signature template (local file or GCS URL: `gs://bucket/path`) |
 | `--credentials` | `./credentials.json` | Path to service account key |
 | `--impersonate` | *(required)* | Admin user for domain-wide delegation |
 | `--verbose` | `false` | Enable debug logging |
+
+**Note**: Defaults can be configured via environment variables in `.env` file. See [Environment Configuration](env-config).
 
 ### Apply Command Flags
 

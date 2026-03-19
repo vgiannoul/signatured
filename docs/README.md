@@ -8,7 +8,8 @@ This directory contains the GitHub Pages documentation site for signatured, buil
 docs/
 ├── _config.yml          # Jekyll configuration (Just the Docs theme)
 ├── index.md             # Main documentation (synced from README.md)
-├── changelog.md         # Version history (synced from CHANGELOG.md)
+├── GCS_SUPPORT.md       # Google Cloud Storage guide
+├── ENV_CONFIG.md        # Environment variable configuration guide
 ├── assets/              # Static assets (logo, images)
 │   └── logo.svg
 └── README.md            # This file
@@ -175,6 +176,8 @@ To update the logo, replace `docs/assets/logo.svg` with your new logo file.
 Pages are ordered using the `nav_order` frontmatter:
 
 - `1` - Home (index.md)
+- `2` - Google Cloud Storage (GCS_SUPPORT.md)
+- `3` - Environment Configuration (ENV_CONFIG.md)
 - `99` - Changelog (changelog.md)
 
 Add new pages with appropriate `nav_order` values to control their position in the sidebar.

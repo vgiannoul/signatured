@@ -15,9 +15,10 @@ import (
 	"github.com/vgiannoul/signatured/internal/template"
 )
 
-const version = "1.0.0"
-
 var (
+	// Build-time version (set via ldflags: -X main.version=...)
+	version = "dev"
+
 	// Global flags
 	templatePath    string
 	credentialsPath string
@@ -33,9 +34,6 @@ var (
 )
 
 func main() {
-	// Load .env file if it exists (ignore errors if file doesn't exist)
-	_ = godotenv.Load()
-
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
@@ -54,11 +52,20 @@ Company-wide configuration is loaded from .env file (COMPANY_WEBSITE, COMPANY_LO
 }
 
 func init() {
+	// Load .env file if it exists (ignore errors if file doesn't exist)
+	_ = godotenv.Load()
+
+	// Get defaults from environment variables, fallback to hardcoded defaults
+	defaultTemplate := getEnv("TEMPLATE_PATH", "./templates/signatured.md")
+	defaultCredentials := getEnv("CREDENTIALS_PATH", "./credentials.json")
+	defaultImpersonate := getEnv("IMPERSONATE_USER", "")
+	defaultVerbose := getEnv("VERBOSE", "false") == "true"
+
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&templatePath, "template", "./templates/signatured.md", "Path to signature template file")
-	rootCmd.PersistentFlags().StringVar(&credentialsPath, "credentials", "./credentials.json", "Path to service account credentials")
-	rootCmd.PersistentFlags().StringVar(&impersonateUser, "impersonate", "", "User email to impersonate for domain-wide delegation (required)")
-	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Enable verbose logging")
+	rootCmd.PersistentFlags().StringVar(&templatePath, "template", defaultTemplate, "Path to signature template file")
+	rootCmd.PersistentFlags().StringVar(&credentialsPath, "credentials", defaultCredentials, "Path to service account credentials")
+	rootCmd.PersistentFlags().StringVar(&impersonateUser, "impersonate", defaultImpersonate, "User email to impersonate for domain-wide delegation (required)")
+	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", defaultVerbose, "Enable verbose logging")
 
 	// Add subcommands
 	rootCmd.AddCommand(applyCmd)
@@ -70,6 +77,14 @@ func init() {
 	applyCmd.Flags().StringVar(&userEmail, "user", "", "Apply to a single user by email")
 	applyCmd.Flags().StringVar(&orgUnit, "org-unit", "", "Apply to users in a specific organizational unit")
 	applyCmd.Flags().BoolVar(&applyAll, "all", false, "Apply to all users in the domain")
+}
+
+// getEnv gets an environment variable with a fallback default value
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 var validateCmd = &cobra.Command{

@@ -2,7 +2,7 @@
 
 # Binary name
 BINARY=signatured
-VERSION=1.0.0
+VERSION=$(shell cat VERSION 2>/dev/null || echo "dev")
 
 # Build flags
 LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION)"

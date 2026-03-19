@@ -35,9 +35,10 @@ Thumbs.db
 *.tmp
 *.bak
 
-# Claude docs
+# Legacy planning docs (consolidated into .ai/ folder)
 PLAN.md
 PROJECT_SUMMARY.md
+PLAN_EXTENSION.md
 
 # Design assets
 svg_logo/

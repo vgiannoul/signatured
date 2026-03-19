@@ -2,11 +2,14 @@ package template
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
 
+	"cloud.google.com/go/storage"
 	"github.com/vgiannoul/signatured/internal/models"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -19,11 +22,22 @@ type Template struct {
 	markdown goldmark.Markdown
 }
 
-// Load reads a signature template from the specified file path.
+// Load reads a signature template from the specified path.
+// Supports local files and Google Cloud Storage URLs (gs:// or https://storage.googleapis.com/).
 func Load(path string) (*Template, error) {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read template file: %w", err)
+	var content []byte
+	var err error
+
+	if isGCSPath(path) {
+		content, err = loadFromGCS(context.Background(), path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load template from GCS: %w", err)
+		}
+	} else {
+		content, err = os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read template file: %w", err)
+		}
 	}
 
 	md := goldmark.New(
@@ -122,6 +136,79 @@ func (t *Template) replacePlaceholders(user *models.User, content string) string
 	})
 
 	return content
+}
+
+// isGCSPath checks if the path is a Google Cloud Storage URL.
+func isGCSPath(path string) bool {
+	return strings.HasPrefix(path, "gs://") ||
+		strings.Contains(path, "storage.googleapis.com")
+}
+
+// parseGCSURL extracts bucket and object path from a GCS URL.
+// Supports both gs:// and https://storage.googleapis.com/ formats.
+func parseGCSURL(url string) (bucket, object string, err error) {
+	// gs://bucket-name/path/to/object.md
+	if strings.HasPrefix(url, "gs://") {
+		url = strings.TrimPrefix(url, "gs://")
+		parts := strings.SplitN(url, "/", 2)
+		if len(parts) != 2 {
+			return "", "", fmt.Errorf("invalid GCS URL format: expected gs://bucket/object")
+		}
+		return parts[0], parts[1], nil
+	}
+
+	// https://storage.googleapis.com/bucket-name/path/to/object.md
+	if strings.Contains(url, "storage.googleapis.com") {
+		// Remove protocol and split by /
+		url = strings.TrimPrefix(url, "https://")
+		url = strings.TrimPrefix(url, "http://")
+		parts := strings.Split(url, "/")
+
+		// Find "storage.googleapis.com" and extract bucket/object after it
+		for i, part := range parts {
+			if part == "storage.googleapis.com" {
+				if i+2 >= len(parts) {
+					return "", "", fmt.Errorf("invalid GCS HTTPS URL format")
+				}
+				bucket = parts[i+1]
+				object = strings.Join(parts[i+2:], "/")
+				return bucket, object, nil
+			}
+		}
+	}
+
+	return "", "", fmt.Errorf("unrecognized GCS URL format: %s", url)
+}
+
+// loadFromGCS downloads a template from Google Cloud Storage.
+// Uses Application Default Credentials (ADC) for authentication.
+func loadFromGCS(ctx context.Context, gcsURL string) ([]byte, error) {
+	bucket, object, err := parseGCSURL(gcsURL)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create GCS client (uses Application Default Credentials)
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GCS client: %w", err)
+	}
+	defer client.Close()
+
+	// Open object reader
+	reader, err := client.Bucket(bucket).Object(object).NewReader(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read object gs://%s/%s: %w", bucket, object, err)
+	}
+	defer reader.Close()
+
+	// Read all content
+	content, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read content from GCS: %w", err)
+	}
+
+	return content, nil
 }
 
 // Validate checks if the template file exists and can be parsed.

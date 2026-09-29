@@ -32,10 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Query injection via `--org-unit`**: the flag value is now validated against an allowlist
   pattern before being used to build the Directory API query
 
-### Changed
-- `templates/relevance.html` (a real, company-specific template) is no longer tracked in git;
-  it's gitignored and kept locally for personal testing only
-
 ## [1.0.2] - 2026-03-19
 
 ### Added

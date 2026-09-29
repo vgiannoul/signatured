@@ -53,7 +53,7 @@ https://storage.googleapis.com/my-org-signatures/templates/signatured.md
 
 Template format is still determined by file extension, whether the template comes from GCS or
 a local file: `.md` is parsed as Markdown, `.html`/`.htm` is used as literal HTML. A GCS path
-like `gs://my-org-signatures/templates/relevance.html` is treated as literal HTML.
+like `gs://my-org-signatures/templates/example.html` is treated as literal HTML.
 
 ## Setup
 

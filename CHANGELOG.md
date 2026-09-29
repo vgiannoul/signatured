@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--output` sets the destination file (default: `./signature-preview.html`)
 - **Literal HTML template support**: templates with a `.html`/`.htm` extension are used as-is,
   skipping Markdown parsing entirely (`.md` templates are unaffected)
+- `templates/example.html` - example HTML table template branded for a fictional company
+  ("Signatured Co"), demonstrating the literal-HTML template format
 
 ### Fixed
 - **HTML/script injection in rendered signatures**: placeholder values (e.g. a user's
@@ -21,9 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   longer break out of the surrounding HTML in templates rendered with raw-HTML support enabled
 - **Query injection via `--org-unit`**: the flag value is now validated against an allowlist
   pattern before being used to build the Directory API query
-
-### Changed
-- `templates/relevance.md` renamed to `templates/relevance.html` (it was always literal HTML)
 
 ## [1.0.2] - 2026-03-19
 

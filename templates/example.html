@@ -1,0 +1,23 @@
+<table style="width: 600px;" border="0" cellpadding="0" cellspacing="0">
+  <tbody>
+    <tr>
+      <td style="width: 180px; vertical-align: top; padding-right: 16px;">
+        <a href="{{companyWebsite}}" target="_blank" rel="noopener">
+          <img src="{{companyLogo}}" width="160" alt="Signatured Co">
+        </a>
+      </td>
+      <td style="border-left: 1px solid #ced4d9; padding-left: 16px; vertical-align: top;">
+        <div style="font-family: Helvetica, Arial, sans-serif; font-size: 16px; font-weight: bold; color: #1a1a1a;">
+          {{firstName}} {{lastName}}
+        </div>
+        {{#if jobTitle}}<div style="font-family: Helvetica, Arial, sans-serif; font-size: 13px; color: #555555;">{{jobTitle}}</div>{{/if}}
+        <div style="margin-top: 8px; font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #1a1a1a; line-height: 1.6;">
+          E <a href="mailto:{{email}}" style="color: #1a1a1a; text-decoration: none;">{{email}}</a><br>
+          T <a href="tel:{{companyPhone}}" style="color: #1a1a1a; text-decoration: none;">{{companyPhone}}</a>{{#if phoneMobile}}, M {{phoneMobile}}{{/if}}<br>
+          A {{companyAddress}}<br>
+          W <a href="{{companyWebsite}}" style="color: #1a1a1a; text-decoration: none;">{{companyWebsite}}</a>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>

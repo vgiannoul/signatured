@@ -184,7 +184,7 @@ signatured/                # Project directory
 ├── .env.example           # Example environment configuration
 ├── templates/             # Signature templates
 │   ├── signatured.md     # Default simple template
-│   └── relevance.html    # Example HTML table template
+│   └── example.html      # Example HTML table template
 └── .gitignore             # Excludes credentials.json and .env
 ```
 
@@ -437,9 +437,9 @@ This prevents awkward blank lines in signatures for users with incomplete profil
 The project includes templates in the `templates/` directory:
 
 - **signatured.md** (default) - Simple Markdown-based template
-- **templates/relevance.html** - Real-world example of an HTML table layout with a logo,
-  social icons, and company branding (`.html`, so it's used literally — see
-  [Template Formats](#template-formats)). Copy it and replace the branding/links before reusing.
+- **templates/example.html** - Example HTML table layout with a logo and contact block for a
+  fictional company ("Signatured Co"), `.html` so it's used literally — see
+  [Template Formats](#template-formats). Copy it and replace the branding with your own.
 
 To use an HTML template, configure company settings in `.env` and run:
 
@@ -447,7 +447,7 @@ To use an HTML template, configure company settings in `.env` and run:
 ./signatured apply \
   --all \
   --impersonate admin@example.com \
-  --template ./templates/relevance.html
+  --template ./templates/example.html
 ```
 
 The company information (`COMPANY_WEBSITE`, `COMPANY_LOGO`, etc.) from your `.env` file will be automatically applied to all user signatures.
@@ -530,7 +530,7 @@ Use a different template file:
 ./signatured apply \
   --user alice@example.com \
   --impersonate admin@example.com \
-  --template ./templates/relevance.html
+  --template ./templates/example.html
 ```
 
 ### Google Cloud Storage Templates
@@ -889,7 +889,7 @@ signatured/
 │       └── template_test.go
 ├── templates/               # Signature templates
 │   ├── signatured.md        # Default simple template
-│   ├── relevance.html       # Example HTML table template
+│   ├── example.html         # Example HTML table template
 │   └── README.md            # Template documentation
 ├── .env                     # Environment config (gitignored)
 ├── .env.example             # Example environment config

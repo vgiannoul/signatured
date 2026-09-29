@@ -4,19 +4,16 @@ This directory contains pre-built email signature templates for use with signatu
 
 ## Available Templates
 
-### relevance.html
+### example.html
 
-Real-world example of an HTML table layout with company branding elements. It's a `.html`
-file, so it's used as literal HTML (no Markdown parsing) — see "Template Formats" below.
-Copy it and replace the branding, social links, and address before using it for your own
-organization.
+Example HTML table layout with a logo and contact block, branded for a fictional company
+("Signatured Co"). It's a `.html` file, so it's used as literal HTML (no Markdown parsing) —
+see "Template Formats" below. Copy it and replace the branding with your own.
 
 **Features:**
 - Two-column layout with logo and user information
-- Social media icons
-- Company contact information
+- Company contact information (email, phone, address, website)
 - Mobile phone support (conditional)
-- Recruitment banner at the bottom
 
 **Usage:**
 
@@ -32,7 +29,7 @@ COMPANY_ADDRESS=123 Main St, City, State 12345
 Preview it locally before applying anything:
 
 ```bash
-./signatured preview --sample --template ./templates/relevance.html
+./signatured preview --sample --template ./templates/example.html
 ```
 
 Then apply the template:
@@ -41,7 +38,7 @@ Then apply the template:
 ./signatured apply \
   --all \
   --impersonate admin@example.com \
-  --template ./templates/relevance.html
+  --template ./templates/example.html
 ```
 
 **Required Placeholders:**
@@ -114,7 +111,7 @@ Set via `.env` file (same for all users):
 
 1. **Preview before testing against real users**:
    ```bash
-   ./signatured preview --sample --template ./templates/relevance.html
+   ./signatured preview --sample --template ./templates/example.html
    ```
 
 2. **Always use conditionals for optional fields** to avoid blank spaces:
@@ -124,12 +121,12 @@ Set via `.env` file (same for all users):
 
 3. **Test with a single user first**:
    ```bash
-   ./signatured apply --user test@example.com --template ./templates/relevance.html --dry-run
+   ./signatured apply --user test@example.com --template ./templates/example.html --dry-run
    ```
 
 4. **Validate before applying**:
    ```bash
-   ./signatured validate --template ./templates/relevance.html
+   ./signatured validate --template ./templates/example.html
    ```
 
 5. **Keep HTML simple** - Email clients have limited HTML support. Avoid:

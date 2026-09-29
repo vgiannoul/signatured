@@ -35,12 +35,12 @@ func TestIsHTMLPath(t *testing.T) {
 		path string
 		want bool
 	}{
-		{"templates/relevance.html", true},
-		{"templates/relevance.HTML", true},
+		{"templates/example.html", true},
+		{"templates/example.HTML", true},
 		{"templates/legacy.htm", true},
 		{"templates/signatured.md", false},
-		{"gs://bucket/templates/relevance.html", true},
-		{"https://storage.googleapis.com/bucket/relevance.html?x=1", true},
+		{"gs://bucket/templates/example.html", true},
+		{"https://storage.googleapis.com/bucket/example.html?x=1", true},
 		{"templates/signatured", false},
 	}
 

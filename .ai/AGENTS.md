@@ -59,8 +59,8 @@ signatured/
 │   ├── GCS_SUPPORT.md   # GCS template guide
 │   └── changelog.md     # User-facing changelog
 ├── templates/            # Example signature templates
-│   ├── signatured.md    # Default simple template
-│   └── relevance.md     # Alternative template
+│   ├── signatured.md    # Default simple Markdown template
+│   └── example.html     # Literal HTML table template (fictional company)
 ├── .env.example          # Environment configuration template
 ├── .gitignore           # Git exclusions
 ├── CHANGELOG.md         # Developer changelog (Keep a Changelog format)

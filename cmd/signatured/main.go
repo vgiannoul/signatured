@@ -126,23 +126,8 @@ or --all for the entire domain.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger := setupLogger(verbose)
 
-		// Validate flags
-		targetCount := 0
-		if userEmail != "" {
-			targetCount++
-		}
-		if orgUnit != "" {
-			targetCount++
-		}
-		if applyAll {
-			targetCount++
-		}
-
-		if targetCount == 0 {
-			return fmt.Errorf("must specify one of: --user, --org-unit, or --all")
-		}
-		if targetCount > 1 {
-			return fmt.Errorf("can only specify one of: --user, --org-unit, or --all")
+		if err := validateApplyTarget(userEmail, orgUnit, applyAll); err != nil {
+			return err
 		}
 
 		if impersonateUser == "" {
@@ -216,6 +201,29 @@ or --all for the entire domain.`,
 	},
 }
 
+// validateApplyTarget checks that exactly one of --user, --org-unit, or --all was given.
+func validateApplyTarget(userEmail, orgUnit string, applyAll bool) error {
+	targetCount := 0
+	if userEmail != "" {
+		targetCount++
+	}
+	if orgUnit != "" {
+		targetCount++
+	}
+	if applyAll {
+		targetCount++
+	}
+
+	if targetCount == 0 {
+		return fmt.Errorf("must specify one of: --user, --org-unit, or --all")
+	}
+	if targetCount > 1 {
+		return fmt.Errorf("can only specify one of: --user, --org-unit, or --all")
+	}
+
+	return nil
+}
+
 var previewCmd = &cobra.Command{
 	Use:   "preview",
 	Short: "Render the signature locally without applying it",
@@ -226,15 +234,8 @@ no Gmail changes are made).`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger := setupLogger(verbose)
 
-		targetCount := 0
-		if previewSample {
-			targetCount++
-		}
-		if previewUserEmail != "" {
-			targetCount++
-		}
-		if targetCount != 1 {
-			return fmt.Errorf("must specify exactly one of: --sample or --user")
+		if err := validatePreviewTarget(previewSample, previewUserEmail); err != nil {
+			return err
 		}
 
 		logger.Info("Loading template", "path", templatePath)
@@ -294,6 +295,21 @@ no Gmail changes are made).`,
 	},
 }
 
+// validatePreviewTarget checks that exactly one of --sample or --user was given.
+func validatePreviewTarget(sample bool, userEmail string) error {
+	targetCount := 0
+	if sample {
+		targetCount++
+	}
+	if userEmail != "" {
+		targetCount++
+	}
+	if targetCount != 1 {
+		return fmt.Errorf("must specify exactly one of: --sample or --user")
+	}
+	return nil
+}
+
 // sampleUser returns built-in placeholder data for offline template previews.
 func sampleUser(companyConfig google.CompanyConfig) *models.User {
 	return &models.User{
@@ -312,9 +328,15 @@ func sampleUser(companyConfig google.CompanyConfig) *models.User {
 	}
 }
 
+// signatureApplier updates a single user's Gmail signature. Satisfied by
+// *google.GmailClient; defined here so processUsers can be tested with a fake.
+type signatureApplier interface {
+	UpdateSignature(ctx context.Context, userEmail, signatureHTML string) error
+}
+
 // processUsers applies signatures to users with concurrency control.
 func processUsers(ctx context.Context, logger *slog.Logger, tmpl *template.Template,
-	gmailClient *google.GmailClient, users []*models.User, concurrency int, dryRun bool) error {
+	gmailClient signatureApplier, users []*models.User, concurrency int, dryRun bool) error {
 
 	type result struct {
 		email   string

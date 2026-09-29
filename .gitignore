@@ -13,6 +13,9 @@ credentials.json
 /signatured
 signatured-*
 
+# Local preview output (may contain real user data via --user)
+signature-preview.html
+
 # IDE
 .vscode/
 .idea/

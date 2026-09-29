@@ -9,8 +9,9 @@
 ## Features
 
 - Single static binary (no runtime dependencies)
-- Markdown-based signature templates with placeholder support
+- Markdown or literal HTML signature templates with placeholder support
 - Template loading from local files or Google Cloud Storage
+- Local signature preview (offline sample data or a real user) before applying
 - Batch signature updates for entire organization or specific OUs
 - OAuth 2.0 service account authentication with domain-wide delegation
 - Rate limiting and automatic retry with exponential backoff
@@ -183,7 +184,7 @@ signatured/                # Project directory
 ├── .env.example           # Example environment configuration
 ├── templates/             # Signature templates
 │   ├── signatured.md     # Default simple template
-│   └── html-table.md     # HTML table template
+│   └── relevance.html    # Example HTML table template
 └── .gitignore             # Excludes credentials.json and .env
 ```
 
@@ -200,6 +201,10 @@ Expected output:
 time=2026-02-13T10:00:00.000+02:00 level=INFO msg="Validating template" path=./templates/signatured.md
 time=2026-02-13T10:00:00.001+02:00 level=INFO msg="Template is valid"
 ```
+
+**Tip**: `validate` only checks that the template loads and parses. To see exactly what the
+rendered signature will look like, use `signatured preview --sample` (see
+[Preview Signature Locally](#preview-signature-locally)) before running a dry run.
 
 ### 11. Run Dry Run Test
 
@@ -253,6 +258,18 @@ Once verified, apply to all users:
 ```
 
 ### Template Syntax
+
+#### Template Formats
+
+The template format is chosen from the file extension:
+
+| Extension | How it's processed |
+|-----------|---------------------|
+| `.md` (default) | Parsed as Markdown and converted to HTML (bold, links, tables, etc.) |
+| `.html` / `.htm` | Used as literal HTML — no Markdown parsing, so raw tags, attributes, and inline styles are preserved exactly as written |
+
+Placeholders and conditional blocks (below) work the same way in both formats. Placeholder
+values are always HTML-escaped before being inserted into the template, whichever format is used.
 
 #### Placeholders
 
@@ -417,23 +434,25 @@ This prevents awkward blank lines in signatures for users with incomplete profil
 
 #### Built-in Templates
 
-The project includes pre-built templates in the `templates/` directory:
+The project includes templates in the `templates/` directory:
 
-- **signatured.md** (default) - Simple markdown-based template
-- **templates/html-table.md** - Professional HTML table layout with company branding
+- **signatured.md** (default) - Simple Markdown-based template
+- **templates/relevance.html** - Real-world example of an HTML table layout with a logo,
+  social icons, and company branding (`.html`, so it's used literally — see
+  [Template Formats](#template-formats)). Copy it and replace the branding/links before reusing.
 
-To use a built-in HTML template, configure company settings in `.env` and run:
+To use an HTML template, configure company settings in `.env` and run:
 
 ```bash
 ./signatured apply \
   --all \
   --impersonate admin@example.com \
-  --template ./templates/html-table.md
+  --template ./templates/relevance.html
 ```
 
 The company information (`COMPANY_WEBSITE`, `COMPANY_LOGO`, etc.) from your `.env` file will be automatically applied to all user signatures.
 
-You can also create custom templates by combining markdown formatting with HTML for more advanced layouts.
+You can also create custom templates by combining markdown formatting with HTML for more advanced layouts, or write a full `.html` template for pixel-precise control. See [Preview Signature Locally](#preview-signature-locally) to check the rendered result before applying it.
 
 ## Usage
 
@@ -478,6 +497,31 @@ Test that your template is valid:
   --dry-run
 ```
 
+### Preview Signature Locally
+
+Render the signature to a local HTML file to review it in a browser — no Gmail changes are
+ever made by `preview`.
+
+With built-in sample data (no Google API calls, no credentials needed):
+
+```bash
+./signatured preview --sample
+```
+
+With a real user's Directory data (read-only):
+
+```bash
+./signatured preview \
+  --user alice@example.com \
+  --impersonate admin@example.com
+```
+
+Both write to `./signature-preview.html` by default; use `--output` to change the path:
+
+```bash
+./signatured preview --sample --output /tmp/preview.html
+```
+
 ### Custom Template
 
 Use a different template file:
@@ -486,7 +530,7 @@ Use a different template file:
 ./signatured apply \
   --user alice@example.com \
   --impersonate admin@example.com \
-  --template ./templates/html-table.md
+  --template ./templates/relevance.html
 ```
 
 ### Google Cloud Storage Templates
@@ -591,6 +635,16 @@ Configuration via `.env` file (automatically loaded):
 | `--concurrency` | Concurrent API calls (default: 10) |
 
 **Note**: Must specify exactly one of `--user`, `--org-unit`, or `--all`.
+
+### Preview Command Flags
+
+| Flag | Description |
+|------|-------------|
+| `--sample` | Render with built-in sample data (no Google API calls) |
+| `--user` | Render using real Directory data for this user email (read-only, no Gmail changes) |
+| `--output` | Path to write the rendered signature HTML (default: `./signature-preview.html`) |
+
+**Note**: Must specify exactly one of `--sample` or `--user`.
 
 ## Example Output
 
@@ -826,6 +880,7 @@ signatured/
 │   ├── google/              # Google API clients
 │   │   ├── auth.go          # Authentication
 │   │   ├── directory.go     # Directory API
+│   │   ├── directory_test.go
 │   │   └── gmail.go         # Gmail API
 │   ├── models/              # Data models
 │   │   └── user.go
@@ -834,7 +889,7 @@ signatured/
 │       └── template_test.go
 ├── templates/               # Signature templates
 │   ├── signatured.md        # Default simple template
-│   ├── html-table.md        # HTML table template
+│   ├── relevance.html       # Example HTML table template
 │   └── README.md            # Template documentation
 ├── .env                     # Environment config (gitignored)
 ├── .env.example             # Example environment config

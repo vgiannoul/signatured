@@ -4,9 +4,12 @@ This directory contains pre-built email signature templates for use with signatu
 
 ## Available Templates
 
-### html-table.md
+### relevance.html
 
-Professional HTML table layout with company branding elements.
+Real-world example of an HTML table layout with company branding elements. It's a `.html`
+file, so it's used as literal HTML (no Markdown parsing) — see "Template Formats" below.
+Copy it and replace the branding, social links, and address before using it for your own
+organization.
 
 **Features:**
 - Two-column layout with logo and user information
@@ -26,13 +29,19 @@ COMPANY_PHONE=+1-555-0100
 COMPANY_ADDRESS=123 Main St, City, State 12345
 ```
 
+Preview it locally before applying anything:
+
+```bash
+./signatured preview --sample --template ./templates/relevance.html
+```
+
 Then apply the template:
 
 ```bash
 ./signatured apply \
   --all \
   --impersonate admin@example.com \
-  --template ./templates/html-table.md
+  --template ./templates/relevance.html
 ```
 
 **Required Placeholders:**
@@ -50,10 +59,14 @@ Then apply the template:
 ## Creating Custom Templates
 
 Templates support:
-- Markdown formatting (converted to HTML)
-- Raw HTML (for complex layouts)
-- Handlebars-style placeholders: `{{fieldName}}`
+- Markdown formatting, converted to HTML (`.md` files)
+- Literal HTML, used as-is with no Markdown parsing (`.html`/`.htm` files) — use this for
+  precise, complex layouts where Markdown's HTML-block handling would be fragile
+- Handlebars-style placeholders: `{{fieldName}}` (always HTML-escaped before substitution)
 - Conditional blocks: `{{#if fieldName}}content{{/if}}`
+
+Use `./signatured preview --sample --template <path>` to see the rendered output locally
+before running `validate`, `--dry-run`, or `apply` against real users.
 
 ### Example Custom Template
 
@@ -99,27 +112,32 @@ Set via `.env` file (same for all users):
 
 ## Best Practices
 
-1. **Always use conditionals for optional fields** to avoid blank spaces:
+1. **Preview before testing against real users**:
+   ```bash
+   ./signatured preview --sample --template ./templates/relevance.html
+   ```
+
+2. **Always use conditionals for optional fields** to avoid blank spaces:
    ```markdown
    {{#if phone}}Phone: {{phone}}{{/if}}
    ```
 
-2. **Test with a single user first**:
+3. **Test with a single user first**:
    ```bash
-   ./signatured apply --user test@example.com --template ./templates/html-table.md --dry-run
+   ./signatured apply --user test@example.com --template ./templates/relevance.html --dry-run
    ```
 
-3. **Validate before applying**:
+4. **Validate before applying**:
    ```bash
-   ./signatured validate --template ./templates/html-table.md
+   ./signatured validate --template ./templates/relevance.html
    ```
 
-4. **Keep HTML simple** - Email clients have limited HTML support. Avoid:
+5. **Keep HTML simple** - Email clients have limited HTML support. Avoid:
    - External CSS files
    - JavaScript
    - Complex positioning (flexbox, grid)
    - Background images
 
-5. **Use inline styles** - All CSS should be inline style attributes
+6. **Use inline styles** - All CSS should be inline style attributes
 
-6. **Test in multiple email clients** - Gmail, Outlook, Apple Mail all render differently
+7. **Test in multiple email clients** - Gmail, Outlook, Apple Mail all render differently

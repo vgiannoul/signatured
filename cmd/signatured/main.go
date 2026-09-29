@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -31,6 +32,11 @@ var (
 	userEmail   string
 	orgUnit     string
 	applyAll    bool
+
+	// Preview command flags
+	previewSample    bool
+	previewUserEmail string
+	previewOutput    string
 )
 
 func main() {
@@ -70,6 +76,7 @@ func init() {
 	// Add subcommands
 	rootCmd.AddCommand(applyCmd)
 	rootCmd.AddCommand(validateCmd)
+	rootCmd.AddCommand(previewCmd)
 
 	// Apply command flags
 	applyCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Preview changes without applying")
@@ -77,6 +84,11 @@ func init() {
 	applyCmd.Flags().StringVar(&userEmail, "user", "", "Apply to a single user by email")
 	applyCmd.Flags().StringVar(&orgUnit, "org-unit", "", "Apply to users in a specific organizational unit")
 	applyCmd.Flags().BoolVar(&applyAll, "all", false, "Apply to all users in the domain")
+
+	// Preview command flags
+	previewCmd.Flags().BoolVar(&previewSample, "sample", false, "Render with built-in sample data (no Google API calls)")
+	previewCmd.Flags().StringVar(&previewUserEmail, "user", "", "Render using real Directory data for this user email")
+	previewCmd.Flags().StringVar(&previewOutput, "output", "./signature-preview.html", "Path to write the rendered signature HTML")
 }
 
 // getEnv gets an environment variable with a fallback default value
@@ -114,23 +126,8 @@ or --all for the entire domain.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger := setupLogger(verbose)
 
-		// Validate flags
-		targetCount := 0
-		if userEmail != "" {
-			targetCount++
-		}
-		if orgUnit != "" {
-			targetCount++
-		}
-		if applyAll {
-			targetCount++
-		}
-
-		if targetCount == 0 {
-			return fmt.Errorf("must specify one of: --user, --org-unit, or --all")
-		}
-		if targetCount > 1 {
-			return fmt.Errorf("can only specify one of: --user, --org-unit, or --all")
+		if err := validateApplyTarget(userEmail, orgUnit, applyAll); err != nil {
+			return err
 		}
 
 		if impersonateUser == "" {
@@ -204,9 +201,142 @@ or --all for the entire domain.`,
 	},
 }
 
+// validateApplyTarget checks that exactly one of --user, --org-unit, or --all was given.
+func validateApplyTarget(userEmail, orgUnit string, applyAll bool) error {
+	targetCount := 0
+	if userEmail != "" {
+		targetCount++
+	}
+	if orgUnit != "" {
+		targetCount++
+	}
+	if applyAll {
+		targetCount++
+	}
+
+	if targetCount == 0 {
+		return fmt.Errorf("must specify one of: --user, --org-unit, or --all")
+	}
+	if targetCount > 1 {
+		return fmt.Errorf("can only specify one of: --user, --org-unit, or --all")
+	}
+
+	return nil
+}
+
+var previewCmd = &cobra.Command{
+	Use:   "preview",
+	Short: "Render the signature locally without applying it",
+	Long: `Render the signature template to a local HTML file so it can be reviewed in a
+browser before running "apply". Use --sample for offline sample data (no
+Google API calls), or --user to fetch real data for one user (read-only,
+no Gmail changes are made).`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		logger := setupLogger(verbose)
+
+		if err := validatePreviewTarget(previewSample, previewUserEmail); err != nil {
+			return err
+		}
+
+		logger.Info("Loading template", "path", templatePath)
+		tmpl, err := template.Load(templatePath)
+		if err != nil {
+			return fmt.Errorf("failed to load template: %w", err)
+		}
+
+		companyConfig := google.CompanyConfig{
+			Website: os.Getenv("COMPANY_WEBSITE"),
+			Logo:    os.Getenv("COMPANY_LOGO"),
+			Phone:   os.Getenv("COMPANY_PHONE"),
+			Address: os.Getenv("COMPANY_ADDRESS"),
+		}
+
+		var user *models.User
+		if previewSample {
+			user = sampleUser(companyConfig)
+		} else {
+			if impersonateUser == "" {
+				return fmt.Errorf("--impersonate is required to fetch a real user for preview")
+			}
+
+			ctx := context.Background()
+			logger.Info("Authenticating with Google Workspace", "impersonate", impersonateUser)
+			client, err := google.NewClient(ctx, credentialsPath, impersonateUser)
+			if err != nil {
+				return fmt.Errorf("authentication failed: %w", err)
+			}
+
+			directoryClient := google.NewDirectoryClient(client.DirectoryService(), extractDomain(impersonateUser), companyConfig)
+			logger.Info("Fetching user", "email", previewUserEmail)
+			user, err = directoryClient.GetUser(ctx, previewUserEmail)
+			if err != nil {
+				return err
+			}
+		}
+
+		signatureHTML, err := tmpl.Render(user)
+		if err != nil {
+			return fmt.Errorf("failed to render template: %w", err)
+		}
+
+		if err := os.WriteFile(previewOutput, []byte(signatureHTML), 0644); err != nil {
+			return fmt.Errorf("failed to write preview file: %w", err)
+		}
+
+		outputPath := previewOutput
+		if absPath, err := filepath.Abs(previewOutput); err == nil {
+			outputPath = absPath
+		}
+
+		fmt.Printf("Signature preview written to %s\n", outputPath)
+		fmt.Println(`Open it in a browser to review before running "apply".`)
+
+		return nil
+	},
+}
+
+// validatePreviewTarget checks that exactly one of --sample or --user was given.
+func validatePreviewTarget(sample bool, userEmail string) error {
+	targetCount := 0
+	if sample {
+		targetCount++
+	}
+	if userEmail != "" {
+		targetCount++
+	}
+	if targetCount != 1 {
+		return fmt.Errorf("must specify exactly one of: --sample or --user")
+	}
+	return nil
+}
+
+// sampleUser returns built-in placeholder data for offline template previews.
+func sampleUser(companyConfig google.CompanyConfig) *models.User {
+	return &models.User{
+		Email:          "jane.doe@example.com",
+		FirstName:      "Jane",
+		LastName:       "Doe",
+		JobTitle:       "Product Manager",
+		Organization:   "Example Corp",
+		Phone:          "+1-555-0100",
+		PhoneMobile:    "+1-555-0101",
+		OrgUnit:        "/Product",
+		CompanyWebsite: companyConfig.Website,
+		CompanyLogo:    companyConfig.Logo,
+		CompanyPhone:   companyConfig.Phone,
+		CompanyAddress: companyConfig.Address,
+	}
+}
+
+// signatureApplier updates a single user's Gmail signature. Satisfied by
+// *google.GmailClient; defined here so processUsers can be tested with a fake.
+type signatureApplier interface {
+	UpdateSignature(ctx context.Context, userEmail, signatureHTML string) error
+}
+
 // processUsers applies signatures to users with concurrency control.
 func processUsers(ctx context.Context, logger *slog.Logger, tmpl *template.Template,
-	gmailClient *google.GmailClient, users []*models.User, concurrency int, dryRun bool) error {
+	gmailClient signatureApplier, users []*models.User, concurrency int, dryRun bool) error {
 
 	type result struct {
 		email   string

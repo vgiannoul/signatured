@@ -87,12 +87,22 @@ func (g *GmailClient) createUserGmailService(ctx context.Context, userEmail stri
 	return service, nil
 }
 
+// Defaults for retryWithBackoff's exponential backoff on rate-limited requests.
+const (
+	defaultMaxRetries = 5
+	defaultBaseDelay  = 1 * time.Second
+	defaultMaxDelay   = 32 * time.Second
+)
+
 // retryWithBackoff implements exponential backoff retry for API rate limiting.
 func (g *GmailClient) retryWithBackoff(ctx context.Context, fn func() error) error {
-	maxRetries := 5
-	baseDelay := 1 * time.Second
-	maxDelay := 32 * time.Second
+	return retryWithBackoff(ctx, fn, defaultMaxRetries, defaultBaseDelay, defaultMaxDelay)
+}
 
+// retryWithBackoff retries fn with exponential backoff on 429/503 errors, up to
+// maxRetries attempts. Extracted from the method above so tests can inject
+// short delays instead of the real multi-second defaults.
+func retryWithBackoff(ctx context.Context, fn func() error, maxRetries int, baseDelay, maxDelay time.Duration) error {
 	var err error
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		err = fn()

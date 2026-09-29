@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	htmlpkg "html"
 	"io"
 	"os"
 	"regexp"
@@ -16,14 +17,19 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 )
 
-// Template represents a signature template with markdown content.
+// Template represents a signature template, either Markdown (converted via
+// goldmark) or literal HTML (used as-is, no markdown parsing).
 type Template struct {
 	raw      string
+	isHTML   bool
 	markdown goldmark.Markdown
 }
 
 // Load reads a signature template from the specified path.
 // Supports local files and Google Cloud Storage URLs (gs:// or https://storage.googleapis.com/).
+// Templates with a .html or .htm extension are treated as literal HTML (only
+// conditionals and placeholders are processed); all others are parsed as
+// Markdown via goldmark.
 func Load(path string) (*Template, error) {
 	var content []byte
 	var err error
@@ -49,6 +55,7 @@ func Load(path string) (*Template, error) {
 
 	return &Template{
 		raw:      string(content),
+		isHTML:   isHTMLPath(path),
 		markdown: md,
 	}, nil
 }
@@ -61,18 +68,17 @@ func (t *Template) Render(user *models.User) (string, error) {
 	// Then, replace remaining placeholders in the markdown content
 	content = t.replacePlaceholders(user, content)
 
+	if t.isHTML {
+		return strings.TrimSpace(content), nil
+	}
+
 	// Convert markdown to HTML
 	var buf bytes.Buffer
 	if err := t.markdown.Convert([]byte(content), &buf); err != nil {
 		return "", fmt.Errorf("failed to convert markdown to HTML: %w", err)
 	}
 
-	html := buf.String()
-
-	// Clean up the HTML (remove unnecessary whitespace)
-	html = strings.TrimSpace(html)
-
-	return html, nil
+	return strings.TrimSpace(buf.String()), nil
 }
 
 // processConditionals processes {{#if field}}...{{/if}} blocks.
@@ -126,9 +132,11 @@ func (t *Template) replacePlaceholders(user *models.User, content string) string
 		// Extract the key from {{key}}
 		key := strings.TrimSpace(match[2 : len(match)-2])
 
-		// Look up the value in the user data
+		// Look up the value in the user data, escaping it so directory data
+		// (e.g. a user's self-editable name or job title) can't break out of
+		// the surrounding HTML/attribute context in the rendered signature.
 		if value, ok := placeholders[key]; ok {
-			return value
+			return htmlpkg.EscapeString(value)
 		}
 
 		// If no value found, return empty string (graceful degradation)
@@ -142,6 +150,16 @@ func (t *Template) replacePlaceholders(user *models.User, content string) string
 func isGCSPath(path string) bool {
 	return strings.HasPrefix(path, "gs://") ||
 		strings.Contains(path, "storage.googleapis.com")
+}
+
+// isHTMLPath reports whether the template path (local or GCS) has a .html or
+// .htm extension, ignoring any query string.
+func isHTMLPath(path string) bool {
+	if idx := strings.IndexByte(path, '?'); idx != -1 {
+		path = path[:idx]
+	}
+	lower := strings.ToLower(path)
+	return strings.HasSuffix(lower, ".html") || strings.HasSuffix(lower, ".htm")
 }
 
 // parseGCSURL extracts bucket and object path from a GCS URL.

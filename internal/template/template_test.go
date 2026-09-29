@@ -30,6 +30,54 @@ func TestLoad(t *testing.T) {
 	}
 }
 
+func TestIsHTMLPath(t *testing.T) {
+	tests := []struct {
+		path string
+		want bool
+	}{
+		{"templates/relevance.html", true},
+		{"templates/relevance.HTML", true},
+		{"templates/legacy.htm", true},
+		{"templates/signatured.md", false},
+		{"gs://bucket/templates/relevance.html", true},
+		{"https://storage.googleapis.com/bucket/relevance.html?x=1", true},
+		{"templates/signatured", false},
+	}
+
+	for _, tt := range tests {
+		if got := isHTMLPath(tt.path); got != tt.want {
+			t.Errorf("isHTMLPath(%q) = %v, want %v", tt.path, got, tt.want)
+		}
+	}
+}
+
+func TestLoadHTMLTemplateSkipsMarkdown(t *testing.T) {
+	tmpDir := t.TempDir()
+	templatePath := filepath.Join(tmpDir, "signature.html")
+
+	// Contains markdown-like syntax (underscores, asterisks) that must survive
+	// untouched since .html templates are not passed through goldmark.
+	content := `<span>{{firstName}}_{{lastName}}</span> **not bold**`
+	if err := os.WriteFile(templatePath, []byte(content), 0644); err != nil {
+		t.Fatalf("Failed to create test template: %v", err)
+	}
+
+	tmpl, err := Load(templatePath)
+	if err != nil {
+		t.Fatalf("Failed to load template: %v", err)
+	}
+
+	html, err := tmpl.Render(&models.User{FirstName: "Alice", LastName: "Smith"})
+	if err != nil {
+		t.Fatalf("Failed to render template: %v", err)
+	}
+
+	want := `<span>Alice_Smith</span> **not bold**`
+	if html != want {
+		t.Errorf("HTML template should be rendered literally.\nGot:  %q\nWant: %q", html, want)
+	}
+}
+
 func TestLoadNonExistent(t *testing.T) {
 	_, err := Load("/nonexistent/template.md")
 	if err == nil {
@@ -134,6 +182,58 @@ func TestReplacePlaceholders(t *testing.T) {
 
 	if result != expected {
 		t.Errorf("Placeholder replacement failed.\nGot:  %q\nWant: %q", result, expected)
+	}
+}
+
+func TestReplacePlaceholdersEscapesHTML(t *testing.T) {
+	tmpl := &Template{
+		raw: `<span>{{firstName}} {{lastName}}</span>`,
+	}
+
+	user := &models.User{
+		FirstName: `"><img src=x onerror=alert(1)>`,
+		LastName:  "O'Brien",
+	}
+
+	content := tmpl.raw
+	result := tmpl.replacePlaceholders(user, content)
+
+	if strings.Contains(result, "<img") || strings.Contains(result, "\"><") {
+		t.Errorf("Placeholder substitution did not escape HTML-breaking characters.\nGot: %q", result)
+	}
+	if !strings.Contains(result, "&#34;&gt;&lt;img") {
+		t.Errorf("Expected escaped payload in output.\nGot: %q", result)
+	}
+}
+
+func TestRenderEscapesMaliciousUserData(t *testing.T) {
+	tmpDir := t.TempDir()
+	templatePath := filepath.Join(tmpDir, "signature.md")
+	content := `<span>{{firstName}} {{lastName}}</span> {{jobTitle}}`
+	if err := os.WriteFile(templatePath, []byte(content), 0644); err != nil {
+		t.Fatalf("Failed to create test template: %v", err)
+	}
+
+	tmpl, err := Load(templatePath)
+	if err != nil {
+		t.Fatalf("Failed to load template: %v", err)
+	}
+
+	user := &models.User{
+		FirstName: `"><img src=x onerror=alert(1)>`,
+		LastName:  "O'Brien",
+		JobTitle:  "<script>alert(1)</script>",
+	}
+
+	html, err := tmpl.Render(user)
+	if err != nil {
+		t.Fatalf("Failed to render template: %v", err)
+	}
+
+	for _, dangerous := range []string{"<img", "<script>", "\"><"} {
+		if strings.Contains(html, dangerous) {
+			t.Errorf("Rendered HTML should not contain unescaped %q.\nGot: %s", dangerous, html)
+		}
 	}
 }
 

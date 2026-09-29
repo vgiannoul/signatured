@@ -3,10 +3,16 @@ package google
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/vgiannoul/signatured/internal/models"
 	directory "google.golang.org/api/admin/directory/v1"
 )
+
+// orgUnitPathPattern matches valid Google Workspace org unit paths
+// (letters, digits, spaces, and /_.- separators). Rejecting anything
+// else prevents breaking out of the quoted Directory API query below.
+var orgUnitPathPattern = regexp.MustCompile(`^[A-Za-z0-9 _./-]+$`)
 
 // CompanyConfig holds company-wide configuration for all users.
 type CompanyConfig struct {
@@ -49,6 +55,9 @@ func (d *DirectoryClient) ListUsers(ctx context.Context) ([]*models.User, error)
 
 // ListUsersByOrgUnit fetches all users in a specific organizational unit.
 func (d *DirectoryClient) ListUsersByOrgUnit(ctx context.Context, orgUnitPath string) ([]*models.User, error) {
+	if !orgUnitPathPattern.MatchString(orgUnitPath) {
+		return nil, fmt.Errorf("invalid org unit path %q: must contain only letters, digits, spaces, and /_.- characters", orgUnitPath)
+	}
 	query := fmt.Sprintf("orgUnitPath='%s'", orgUnitPath)
 	return d.listUsersWithQuery(ctx, query)
 }

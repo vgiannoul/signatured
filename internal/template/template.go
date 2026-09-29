@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	htmlpkg "html"
 	"io"
 	"os"
 	"regexp"
@@ -126,9 +127,11 @@ func (t *Template) replacePlaceholders(user *models.User, content string) string
 		// Extract the key from {{key}}
 		key := strings.TrimSpace(match[2 : len(match)-2])
 
-		// Look up the value in the user data
+		// Look up the value in the user data, escaping it so directory data
+		// (e.g. a user's self-editable name or job title) can't break out of
+		// the surrounding HTML/attribute context in the rendered signature.
 		if value, ok := placeholders[key]; ok {
-			return value
+			return htmlpkg.EscapeString(value)
 		}
 
 		// If no value found, return empty string (graceful degradation)

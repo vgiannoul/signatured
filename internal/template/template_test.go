@@ -137,6 +137,58 @@ func TestReplacePlaceholders(t *testing.T) {
 	}
 }
 
+func TestReplacePlaceholdersEscapesHTML(t *testing.T) {
+	tmpl := &Template{
+		raw: `<span>{{firstName}} {{lastName}}</span>`,
+	}
+
+	user := &models.User{
+		FirstName: `"><img src=x onerror=alert(1)>`,
+		LastName:  "O'Brien",
+	}
+
+	content := tmpl.raw
+	result := tmpl.replacePlaceholders(user, content)
+
+	if strings.Contains(result, "<img") || strings.Contains(result, "\"><") {
+		t.Errorf("Placeholder substitution did not escape HTML-breaking characters.\nGot: %q", result)
+	}
+	if !strings.Contains(result, "&#34;&gt;&lt;img") {
+		t.Errorf("Expected escaped payload in output.\nGot: %q", result)
+	}
+}
+
+func TestRenderEscapesMaliciousUserData(t *testing.T) {
+	tmpDir := t.TempDir()
+	templatePath := filepath.Join(tmpDir, "signature.md")
+	content := `<span>{{firstName}} {{lastName}}</span> {{jobTitle}}`
+	if err := os.WriteFile(templatePath, []byte(content), 0644); err != nil {
+		t.Fatalf("Failed to create test template: %v", err)
+	}
+
+	tmpl, err := Load(templatePath)
+	if err != nil {
+		t.Fatalf("Failed to load template: %v", err)
+	}
+
+	user := &models.User{
+		FirstName: `"><img src=x onerror=alert(1)>`,
+		LastName:  "O'Brien",
+		JobTitle:  "<script>alert(1)</script>",
+	}
+
+	html, err := tmpl.Render(user)
+	if err != nil {
+		t.Fatalf("Failed to render template: %v", err)
+	}
+
+	for _, dangerous := range []string{"<img", "<script>", "\"><"} {
+		if strings.Contains(html, dangerous) {
+			t.Errorf("Rendered HTML should not contain unescaped %q.\nGot: %s", dangerous, html)
+		}
+	}
+}
+
 func TestReplacePlaceholdersGracefulDegradation(t *testing.T) {
 	tmpl := &Template{
 		raw: "{{firstName}} {{lastName}} - {{unknownField}}",

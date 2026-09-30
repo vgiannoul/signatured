@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/vgiannoul/signatured/internal/models"
 	directory "google.golang.org/api/admin/directory/v1"
@@ -20,6 +21,15 @@ type CompanyConfig struct {
 	Logo    string
 	Phone   string
 	Address string
+
+	// PhoneLabel is shown next to a user's work phone number.
+	// InternalPhoneLabel is used instead when that phone is marked with a
+	// "custom" type whose customType contains "internal" in Directory
+	// (e.g. an internal extension rather than an externally-dialable number).
+	// Both are empty by default; a template must use {{phoneLabel}} for
+	// either to have any effect.
+	PhoneLabel         string
+	InternalPhoneLabel string
 }
 
 // DirectoryClient handles fetching user data from Google Workspace Directory API.
@@ -112,6 +122,14 @@ type Organization struct {
 	Title   string `json:"title"`
 }
 
+// isInternalPhone reports whether a Directory phone entry is marked as an
+// internal number - a "custom" type whose customType mentions "internal"
+// (e.g. an office extension rather than an externally-dialable number).
+func isInternalPhone(phoneMap map[string]interface{}) bool {
+	customType, _ := phoneMap["customType"].(string)
+	return strings.Contains(strings.ToLower(customType), "internal")
+}
+
 // convertUser converts a Directory API user to our internal User model.
 func (d *DirectoryClient) convertUser(u *directory.User) *models.User {
 	user := &models.User{
@@ -133,24 +151,36 @@ func (d *DirectoryClient) convertUser(u *directory.User) *models.User {
 	// Since Phones is interface{}, we need to handle it carefully
 	if u.Phones != nil {
 		if phonesData, ok := u.Phones.([]interface{}); ok && len(phonesData) > 0 {
+			var phoneIsInternal bool
+
 			for _, p := range phonesData {
-				if phoneMap, ok := p.(map[string]interface{}); ok {
-					phoneType, _ := phoneMap["type"].(string)
-					phoneValue, _ := phoneMap["value"].(string)
-					if phoneValue == "" {
-						continue
-					}
-					if phoneType == "work" && user.Phone == "" {
-						user.Phone = phoneValue
-					} else if phoneType == "mobile" && user.PhoneMobile == "" {
-						user.PhoneMobile = phoneValue
-					}
+				phoneMap, ok := p.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				phoneType, _ := phoneMap["type"].(string)
+				phoneValue, _ := phoneMap["value"].(string)
+				if phoneValue == "" {
+					continue
+				}
+
+				switch {
+				case phoneType == "work" && user.Phone == "":
+					user.Phone = phoneValue
+					phoneIsInternal = false
+				case phoneType == "mobile" && user.PhoneMobile == "":
+					user.PhoneMobile = phoneValue
+				case phoneType == "custom" && user.Phone == "" && isInternalPhone(phoneMap):
+					user.Phone = phoneValue
+					phoneIsInternal = true
 				}
 			}
-			// Fallback to the first non-mobile phone if no work phone was found.
-			// Mobile numbers are excluded here since they're already represented
-			// via PhoneMobile - falling back to one would show the same number
-			// twice in the signature (as both the work and mobile phone).
+
+			// Fallback to the first non-mobile phone if no work/internal phone
+			// was found. Mobile numbers are excluded here since they're already
+			// represented via PhoneMobile - falling back to one would show the
+			// same number twice in the signature (as both the work and mobile
+			// phone).
 			if user.Phone == "" {
 				for _, p := range phonesData {
 					phoneMap, ok := p.(map[string]interface{})
@@ -163,7 +193,17 @@ func (d *DirectoryClient) convertUser(u *directory.User) *models.User {
 						continue
 					}
 					user.Phone = phoneValue
+					phoneIsInternal = isInternalPhone(phoneMap)
 					break
+				}
+			}
+
+			if user.Phone != "" {
+				user.PhoneIsInternal = phoneIsInternal
+				if phoneIsInternal {
+					user.PhoneLabel = d.companyConfig.InternalPhoneLabel
+				} else {
+					user.PhoneLabel = d.companyConfig.PhoneLabel
 				}
 			}
 		}

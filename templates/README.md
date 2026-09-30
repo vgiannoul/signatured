@@ -91,6 +91,8 @@ Save as `custom.md` and use with:
 | `{{firstName}}` | User's given name | Yes |
 | `{{lastName}}` | User's family name | Yes |
 | `{{phone}}` | User's work phone (falls back to any non-mobile entry) | No (use `{{#if phone}}`) |
+| `{{phoneLabel}}` | Label for `{{phone}}` - normal or internal, from settings | No (use `{{#if phoneLabel}}`) |
+| `{{phoneIsInternal}}` | Truthy only when the work phone is an internal extension | No (use `{{#if phoneIsInternal}}`) |
 | `{{phoneMobile}}` | User's mobile phone | No (use `{{#if phoneMobile}}`) |
 | `{{jobTitle}}` | User's job title | No (use `{{#if jobTitle}}`) |
 | `{{organization}}` | User's organization | No (use `{{#if organization}}`) |

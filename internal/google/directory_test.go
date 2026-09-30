@@ -96,6 +96,92 @@ func TestConvertUserPhones(t *testing.T) {
 	}
 }
 
+func TestConvertUserPhoneLabel(t *testing.T) {
+	tests := []struct {
+		name           string
+		phones         interface{}
+		wantPhone      string
+		wantPhoneLabel string
+		wantIsInternal bool
+	}{
+		{
+			name: "work phone gets the default label",
+			phones: []interface{}{
+				map[string]interface{}{"type": "work", "value": "2101234567"},
+			},
+			wantPhone:      "2101234567",
+			wantPhoneLabel: "T",
+			wantIsInternal: false,
+		},
+		{
+			name: "custom phone with internal customType gets the internal label",
+			phones: []interface{}{
+				map[string]interface{}{"type": "custom", "customType": "Internal", "value": "1234"},
+			},
+			wantPhone:      "1234",
+			wantPhoneLabel: "Ext.",
+			wantIsInternal: true,
+		},
+		{
+			name: "customType matching is case-insensitive and allows extra words",
+			phones: []interface{}{
+				map[string]interface{}{"type": "custom", "customType": "internal extension", "value": "5678"},
+			},
+			wantPhone:      "5678",
+			wantPhoneLabel: "Ext.",
+			wantIsInternal: true,
+		},
+		{
+			name: "custom phone without an internal customType is not labeled internal",
+			phones: []interface{}{
+				map[string]interface{}{"type": "custom", "customType": "fax line", "value": "2109999999"},
+			},
+			wantPhone:      "2109999999",
+			wantPhoneLabel: "T",
+			wantIsInternal: false,
+		},
+		{
+			name: "explicit work phone wins over a later internal custom phone",
+			phones: []interface{}{
+				map[string]interface{}{"type": "work", "value": "2101234567"},
+				map[string]interface{}{"type": "custom", "customType": "internal", "value": "1234"},
+			},
+			wantPhone:      "2101234567",
+			wantPhoneLabel: "T",
+			wantIsInternal: false,
+		},
+		{
+			name:           "no phones - no label",
+			phones:         nil,
+			wantPhone:      "",
+			wantPhoneLabel: "",
+			wantIsInternal: false,
+		},
+	}
+
+	d := NewDirectoryClient(nil, "example.com", CompanyConfig{
+		PhoneLabel:         "T",
+		InternalPhoneLabel: "Ext.",
+	})
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := &directory.User{PrimaryEmail: "alice@example.com", Phones: tt.phones}
+			user := d.convertUser(u)
+
+			if user.Phone != tt.wantPhone {
+				t.Errorf("Phone = %q, want %q", user.Phone, tt.wantPhone)
+			}
+			if user.PhoneLabel != tt.wantPhoneLabel {
+				t.Errorf("PhoneLabel = %q, want %q", user.PhoneLabel, tt.wantPhoneLabel)
+			}
+			if user.PhoneIsInternal != tt.wantIsInternal {
+				t.Errorf("PhoneIsInternal = %v, want %v", user.PhoneIsInternal, tt.wantIsInternal)
+			}
+		})
+	}
+}
+
 func TestListUsersByOrgUnitRejectsInvalidPath(t *testing.T) {
 	// service is intentionally nil: an invalid path must be rejected before
 	// the Directory API service is ever touched.

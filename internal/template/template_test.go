@@ -338,6 +338,63 @@ func TestProcessConditionals(t *testing.T) {
 	}
 }
 
+func TestRenderPhoneIsInternalPrefixesCompanyPhone(t *testing.T) {
+	// The pattern documented in README.md for showing "<company phone> / Ext. <internal number>"
+	// only when the work phone is an internal extension.
+	tmplSrc := "{{#if phone}}{{#if phoneIsInternal}}{{companyPhone}} / {{/if}}{{phoneLabel}} {{phone}}{{/if}}"
+
+	tests := []struct {
+		name string
+		user *models.User
+		want string
+	}{
+		{
+			name: "internal phone shows company phone prefix",
+			user: &models.User{
+				Phone:           "+123",
+				PhoneLabel:      "Ext.",
+				PhoneIsInternal: true,
+				CompanyPhone:    "+30 210 3210577",
+			},
+			want: "+30 210 3210577 / Ext. +123",
+		},
+		{
+			name: "normal work phone has no company phone prefix",
+			user: &models.User{
+				Phone:           "+1-555-0100",
+				PhoneLabel:      "T",
+				PhoneIsInternal: false,
+				CompanyPhone:    "+30 210 3210577",
+			},
+			want: "T +1-555-0100",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			path := filepath.Join(tmpDir, "signature.md")
+			if err := os.WriteFile(path, []byte(tmplSrc), 0644); err != nil {
+				t.Fatalf("failed to write test template: %v", err)
+			}
+
+			tmpl, err := Load(path)
+			if err != nil {
+				t.Fatalf("failed to load template: %v", err)
+			}
+
+			html, err := tmpl.Render(tt.user)
+			if err != nil {
+				t.Fatalf("failed to render template: %v", err)
+			}
+
+			if !strings.Contains(html, tt.want) {
+				t.Errorf("rendered HTML does not contain %q.\nGot: %s", tt.want, html)
+			}
+		})
+	}
+}
+
 func TestRenderWithConditionals(t *testing.T) {
 	tests := []struct {
 		name        string

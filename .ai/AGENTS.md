@@ -2,7 +2,7 @@
 
 **Project**: Google Workspace Signature Manager
 **Language**: Go 1.26
-**Current Version**: 1.1.0
+**Current Version**: 1.2.0
 **Versioning**: Semantic Versioning (SemVer 2.0.0)
 
 ## Project Overview

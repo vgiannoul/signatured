@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-30
+
 ### Added
 - **`--exclude` flag** (and `EXCLUDE_USERS` env var) to skip specific user emails on `apply`
   (e.g. shared mailboxes, service accounts). Excluded users are reported as skipped in the

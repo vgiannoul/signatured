@@ -304,6 +304,7 @@ values are always HTML-escaped before being inserted into the template, whicheve
 | `{{lastName}}` | Last name | `name.familyName` |
 | `{{email}}` | Email address | `primaryEmail` |
 | `{{phone}}` | Phone number (prefers work, falls back to any non-mobile number) | `phones[type=work].value` |
+| `{{phoneLabel}}` | Label to show next to `{{phone}}` (e.g. "T" or "Ext.") | Computed - see note below |
 | `{{phoneMobile}}` | Mobile phone number | `phones[type=mobile].value` |
 | `{{orgUnit}}` | Organizational unit path | `orgUnitPath` |
 | `{{jobTitle}}` | Job title | `organizations[0].title` |
@@ -330,6 +331,35 @@ phone entry in Google Workspace is typed "Mobile" (Directory → user → Contac
 Phone), `{{phone}}` will correctly be empty and only `{{phoneMobile}}` will be populated - make
 sure phone numbers are entered under the matching type in Workspace for this to render as
 expected.
+
+**Internal phone labels**: `{{phoneLabel}}` lets a template show a different label next to
+`{{phone}}` when that number is an internal extension rather than an externally-dialable one.
+In Google Workspace, mark a phone as internal by giving it type "Custom" with a custom type that
+mentions "internal" (e.g. "Internal", "Internal Extension") instead of "Work". Set the label text
+via two environment variables:
+
+```bash
+COMPANY_PHONE_LABEL=T
+COMPANY_INTERNAL_PHONE_LABEL=Ext.
+```
+
+Then reference it in a template instead of a hardcoded label:
+
+```
+{{phoneLabel}} {{phone}}
+```
+
+Both variables default to empty - if unset, `{{phoneLabel}}` is always empty and has no effect,
+so this is opt-in for templates that use it. `{{phone}}` and whether it's treated as internal are
+unaffected either way.
+
+`{{#if phoneIsInternal}}` is also available for templates that want to show the company's main
+number alongside the extension, e.g. to render `+30 210 3210577 / Ext. +123` for an internal
+number but just `T +1-555-0100` for a normal one:
+
+```
+{{#if phone}}{{#if phoneIsInternal}}{{companyPhone}} / {{/if}}{{phoneLabel}} {{phone}}{{/if}}
+```
 
 #### Conditional Blocks
 
@@ -653,6 +683,8 @@ Configuration via `.env` file (automatically loaded):
 | `COMPANY_LOGO` | Company logo image URL | `https://example.com/logo.png` |
 | `COMPANY_PHONE` | Company phone number | `+1-555-0100` |
 | `COMPANY_ADDRESS` | Company address | `123 Main St, City, State` |
+| `COMPANY_PHONE_LABEL` | Label for `{{phoneLabel}}` on a normal (non-internal) work phone | `T` |
+| `COMPANY_INTERNAL_PHONE_LABEL` | Label for `{{phoneLabel}}` when the work phone is an internal extension | `Ext.` |
 
 **Note**: Command-line flags take precedence over environment variables.
 

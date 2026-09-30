@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   skipping Markdown parsing entirely (`.md` templates are unaffected)
 - `templates/example.html` - example HTML table template branded for a fictional company
   ("Signatured Co"), demonstrating the literal-HTML template format
+- **Internal phone labels**: `{{phoneLabel}}` and `{{phoneIsInternal}}` let a template show a
+  different label (e.g. "Ext.") next to a work phone that's an internal extension - marked in
+  Directory as a "Custom" phone type whose custom type mentions "internal" - configured via new
+  `COMPANY_PHONE_LABEL` / `COMPANY_INTERNAL_PHONE_LABEL` environment variables
 
 ### Fixed
 - **HTML/script injection in rendered signatures**: placeholder values (e.g. a user's

@@ -1,0 +1,16 @@
+.git
+.github
+.ai
+dist/
+bin/
+*.md
+docs/
+templates/
+.env
+.env.example
+credentials.json
+credentials.json.bak.json
+signature-preview.html
+rel-notes.md
+test.md
+.DS_Store

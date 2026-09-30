@@ -88,3 +88,18 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: |
           go build -ldflags="-s -w" -o signatured-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/signatured
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Build image
+        run: docker build -t signatured:ci .
+
+      - name: Smoke test image
+        run: docker run --rm signatured:ci --version

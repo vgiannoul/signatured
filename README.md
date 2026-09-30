@@ -50,6 +50,29 @@ cd signatured
 go build -o signatured ./cmd/signatured
 ```
 
+### Docker
+
+A `Dockerfile` is included for running signatured in containers (e.g. as a scheduled Cloud Run
+Job). It builds a minimal, non-root, distroless image with just the binary:
+
+```bash
+docker build -t signatured .
+docker run --rm signatured --version
+
+# Mount local files to use them inside the container
+docker run --rm \
+  -v "$(pwd)/templates:/templates:ro" \
+  -v "$(pwd)/credentials.json:/credentials.json:ro" \
+  signatured apply \
+  --all \
+  --impersonate admin@example.com \
+  --template /templates/signatured.md \
+  --credentials /credentials.json
+```
+
+The image doesn't bundle any templates or credentials — pass a `--template` (local mount or a
+`gs://` URL) and `--credentials` path at runtime.
+
 ## Prerequisites
 
 Before setting up signatured, ensure you have:

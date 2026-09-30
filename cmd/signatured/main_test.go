@@ -35,6 +35,36 @@ func TestExtractDomain(t *testing.T) {
 	}
 }
 
+func TestGetEnvSlice(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  []string
+	}{
+		{"unset", "", nil},
+		{"single value", "alice@example.com", []string{"alice@example.com"}},
+		{"multiple values", "alice@example.com,bob@example.com", []string{"alice@example.com", "bob@example.com"}},
+		{"trims whitespace", " alice@example.com , bob@example.com ", []string{"alice@example.com", "bob@example.com"}},
+		{"drops empty entries", "alice@example.com,,bob@example.com,", []string{"alice@example.com", "bob@example.com"}},
+	}
+
+	const key = "SIGNATURED_TEST_ENV_SLICE"
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv(key, tt.value)
+			got := getEnvSlice(key)
+			if len(got) != len(tt.want) {
+				t.Fatalf("getEnvSlice(%q) = %v, want %v", tt.value, got, tt.want)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("getEnvSlice(%q)[%d] = %q, want %q", tt.value, i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}
+
 func TestValidateApplyTarget(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -154,7 +184,7 @@ func TestProcessUsersAllSucceed(t *testing.T) {
 	tmpl := loadTestTemplate(t)
 	users := usersWithEmails("a@example.com", "b@example.com", "c@example.com")
 
-	err := processUsers(context.Background(), discardLogger(), tmpl, applier, users, 10, false)
+	err := processUsers(context.Background(), discardLogger(), tmpl, applier, users, 10, false, nil)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -168,7 +198,7 @@ func TestProcessUsersReportsFailures(t *testing.T) {
 	tmpl := loadTestTemplate(t)
 	users := usersWithEmails("a@example.com", "b@example.com", "c@example.com")
 
-	err := processUsers(context.Background(), discardLogger(), tmpl, applier, users, 10, false)
+	err := processUsers(context.Background(), discardLogger(), tmpl, applier, users, 10, false, nil)
 	if err == nil {
 		t.Fatal("expected an error because one user failed, got nil")
 	}
@@ -185,12 +215,33 @@ func TestProcessUsersDryRunSkipsUpdates(t *testing.T) {
 	tmpl := loadTestTemplate(t)
 	users := usersWithEmails("a@example.com", "b@example.com")
 
-	err := processUsers(context.Background(), discardLogger(), tmpl, applier, users, 10, true)
+	err := processUsers(context.Background(), discardLogger(), tmpl, applier, users, 10, true, nil)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 	if len(applier.calls) != 0 {
 		t.Errorf("dry run should not call UpdateSignature, got %d calls", len(applier.calls))
+	}
+}
+
+func TestProcessUsersExcludesUsers(t *testing.T) {
+	applier := &fakeApplier{}
+	tmpl := loadTestTemplate(t)
+	users := usersWithEmails("a@example.com", "b@example.com", "c@example.com")
+
+	err := processUsers(context.Background(), discardLogger(), tmpl, applier, users, 10, false,
+		[]string{" B@Example.com "}) // exercises trimming and case-insensitivity too
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(applier.calls) != 2 {
+		t.Fatalf("expected 2 UpdateSignature calls (excluded user skipped), got %d: %v", len(applier.calls), applier.calls)
+	}
+	for _, email := range applier.calls {
+		if email == "b@example.com" {
+			t.Error("excluded user b@example.com should not have had UpdateSignature called")
+		}
 	}
 }
 
@@ -205,7 +256,7 @@ func TestProcessUsersRespectsConcurrencyLimit(t *testing.T) {
 	users := usersWithEmails(emails...)
 
 	const limit = 3
-	if err := processUsers(context.Background(), discardLogger(), tmpl, applier, users, limit, false); err != nil {
+	if err := processUsers(context.Background(), discardLogger(), tmpl, applier, users, limit, false, nil); err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 

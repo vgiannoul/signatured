@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`--exclude` flag** (and `EXCLUDE_USERS` env var) to skip specific user emails on `apply`
+  (e.g. shared mailboxes, service accounts). Excluded users are reported as skipped in the
+  output and summary rather than silently dropped.
+
 ### Fixed
 - **Release binaries reporting `dev` as their version**: `release.yml` builds now inject the git
   tag into `main.version` via `-ldflags`, matching what the Makefile already did for local builds

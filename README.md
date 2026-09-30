@@ -653,6 +653,26 @@ Adjust the number of concurrent API calls (default: 10):
   --concurrency 5
 ```
 
+### Excluding Users
+
+Skip specific users (e.g. shared mailboxes, service accounts) when applying to `--all` or an
+`--org-unit`. Repeat the flag or pass a comma-separated list:
+
+```bash
+./signatured apply \
+  --all \
+  --impersonate admin@example.com \
+  --exclude noreply@example.com \
+  --exclude shared-inbox@example.com
+
+# Equivalent
+./signatured apply --all --impersonate admin@example.com --exclude noreply@example.com,shared-inbox@example.com
+```
+
+Matching is case-insensitive. Excluded users show up in the output and summary as skipped
+(`⊘ email - skipped (excluded via --exclude)`) rather than being silently dropped. Also
+configurable via the `EXCLUDE_USERS` environment variable (comma-separated) for scheduled runs.
+
 ## Command Reference
 
 ### Global Flags
@@ -675,6 +695,7 @@ Configuration via `.env` file (automatically loaded):
 | `CREDENTIALS_PATH` | Path to service account credentials | `./credentials.json` | `/secrets/credentials.json` |
 | `IMPERSONATE_USER` | Admin user for domain-wide delegation | *(none)* | `admin@example.com` |
 | `VERBOSE` | Enable verbose logging | `false` | `true` |
+| `EXCLUDE_USERS` | User emails to skip on `apply` (comma-separated) | *(none)* | `noreply@example.com,shared@example.com` |
 
 #### Company-Wide Settings
 | Variable | Description | Example |
@@ -697,6 +718,7 @@ Configuration via `.env` file (automatically loaded):
 | `--all` | Apply to all users in domain |
 | `--dry-run` | Preview without applying |
 | `--concurrency` | Concurrent API calls (default: 10) |
+| `--exclude` | User emails to skip (comma-separated, or repeat the flag) |
 
 **Note**: Must specify exactly one of `--user`, `--org-unit`, or `--all`.
 

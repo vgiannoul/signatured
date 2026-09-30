@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-30
+
 ### Added
 - **`preview` command** to render a signature to a local HTML file without applying it
   - `--sample` uses built-in sample data (no Google API calls, no credentials needed)
@@ -20,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   different label (e.g. "Ext.") next to a work phone that's an internal extension - marked in
   Directory as a "Custom" phone type whose custom type mentions "internal" - configured via new
   `COMPANY_PHONE_LABEL` / `COMPANY_INTERNAL_PHONE_LABEL` environment variables
+- `Dockerfile` for running signatured in containers (e.g. as a scheduled Cloud Run Job), plus a
+  CI job that builds and smoke-tests the image
 
 ### Fixed
 - **HTML/script injection in rendered signatures**: placeholder values (e.g. a user's

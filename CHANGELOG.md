@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   longer break out of the surrounding HTML in templates rendered with raw-HTML support enabled
 - **Query injection via `--org-unit`**: the flag value is now validated against an allowlist
   pattern before being used to build the Directory API query
+- **Duplicate phone number in signatures**: if a user's only phone entry in Directory was typed
+  "Mobile" (no "Work" entry), `{{phone}}` incorrectly fell back to that same mobile number,
+  showing it twice in the signature. The fallback now excludes mobile-typed entries.
 
 ## [1.0.2] - 2026-03-19
 

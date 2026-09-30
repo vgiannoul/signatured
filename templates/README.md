@@ -90,7 +90,7 @@ Save as `custom.md` and use with:
 | `{{email}}` | User's primary email | Yes |
 | `{{firstName}}` | User's given name | Yes |
 | `{{lastName}}` | User's family name | Yes |
-| `{{phone}}` | User's work phone | No (use `{{#if phone}}`) |
+| `{{phone}}` | User's work phone (falls back to any non-mobile entry) | No (use `{{#if phone}}`) |
 | `{{phoneMobile}}` | User's mobile phone | No (use `{{#if phoneMobile}}`) |
 | `{{jobTitle}}` | User's job title | No (use `{{#if jobTitle}}`) |
 | `{{organization}}` | User's organization | No (use `{{#if organization}}`) |

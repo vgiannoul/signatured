@@ -147,12 +147,23 @@ func (d *DirectoryClient) convertUser(u *directory.User) *models.User {
 					}
 				}
 			}
-			// Fallback to first phone if no work phone found
+			// Fallback to the first non-mobile phone if no work phone was found.
+			// Mobile numbers are excluded here since they're already represented
+			// via PhoneMobile - falling back to one would show the same number
+			// twice in the signature (as both the work and mobile phone).
 			if user.Phone == "" {
-				if phoneMap, ok := phonesData[0].(map[string]interface{}); ok {
-					if phoneValue, ok := phoneMap["value"].(string); ok {
-						user.Phone = phoneValue
+				for _, p := range phonesData {
+					phoneMap, ok := p.(map[string]interface{})
+					if !ok {
+						continue
 					}
+					phoneType, _ := phoneMap["type"].(string)
+					phoneValue, _ := phoneMap["value"].(string)
+					if phoneValue == "" || phoneType == "mobile" {
+						continue
+					}
+					user.Phone = phoneValue
+					break
 				}
 			}
 		}

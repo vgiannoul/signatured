@@ -303,7 +303,7 @@ values are always HTML-escaped before being inserted into the template, whicheve
 | `{{firstName}}` | First name | `name.givenName` |
 | `{{lastName}}` | Last name | `name.familyName` |
 | `{{email}}` | Email address | `primaryEmail` |
-| `{{phone}}` | Phone number (prefers work) | `phones[type=work].value` |
+| `{{phone}}` | Phone number (prefers work, falls back to any non-mobile number) | `phones[type=work].value` |
 | `{{phoneMobile}}` | Mobile phone number | `phones[type=mobile].value` |
 | `{{orgUnit}}` | Organizational unit path | `orgUnitPath` |
 | `{{jobTitle}}` | Job title | `organizations[0].title` |
@@ -321,6 +321,15 @@ These fields are set via `.env` file and apply to all users:
 | `{{companyAddress}}` | Company address | `COMPANY_ADDRESS` |
 
 **Note**: The top-level organizational unit (`/`) is treated as empty when using conditionals, so `{{#if orgUnit}}` will hide content for users in the root organization.
+
+**Note on phone numbers**: `{{phone}}` comes from the Directory field explicitly typed "Work". If a
+user has no "Work" phone entered but does have other phone entries, `{{phone}}` falls back to the
+first non-mobile one — the mobile-typed entry is deliberately excluded from that fallback so it
+doesn't get shown twice (once via `{{phone}}`, once via `{{phoneMobile}}`). If a user's *only*
+phone entry in Google Workspace is typed "Mobile" (Directory → user → Contact information →
+Phone), `{{phone}}` will correctly be empty and only `{{phoneMobile}}` will be populated - make
+sure phone numbers are entered under the matching type in Workspace for this to render as
+expected.
 
 #### Conditional Blocks
 

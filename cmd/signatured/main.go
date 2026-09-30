@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,11 +28,12 @@ var (
 	verbose         bool
 
 	// Apply command flags
-	dryRun      bool
-	concurrency int
-	userEmail   string
-	orgUnit     string
-	applyAll    bool
+	dryRun       bool
+	concurrency  int
+	userEmail    string
+	orgUnit      string
+	applyAll     bool
+	excludeUsers []string
 
 	// Preview command flags
 	previewSample    bool
@@ -84,6 +86,8 @@ func init() {
 	applyCmd.Flags().StringVar(&userEmail, "user", "", "Apply to a single user by email")
 	applyCmd.Flags().StringVar(&orgUnit, "org-unit", "", "Apply to users in a specific organizational unit")
 	applyCmd.Flags().BoolVar(&applyAll, "all", false, "Apply to all users in the domain")
+	applyCmd.Flags().StringSliceVar(&excludeUsers, "exclude", getEnvSlice("EXCLUDE_USERS"),
+		"User emails to exclude from apply (comma-separated, or repeat the flag)")
 
 	// Preview command flags
 	previewCmd.Flags().BoolVar(&previewSample, "sample", false, "Render with built-in sample data (no Google API calls)")
@@ -97,6 +101,24 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// getEnvSlice reads a comma-separated environment variable into a string slice,
+// trimming whitespace and dropping empty entries. Returns nil if unset.
+func getEnvSlice(key string) []string {
+	value := os.Getenv(key)
+	if value == "" {
+		return nil
+	}
+
+	parts := strings.Split(value, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
 }
 
 // loadCompanyConfig reads company-wide signature configuration from environment variables.
@@ -204,7 +226,7 @@ or --all for the entire domain.`,
 		}
 
 		// Process users
-		return processUsers(ctx, logger, tmpl, gmailClient, users, concurrency, dryRun)
+		return processUsers(ctx, logger, tmpl, gmailClient, users, concurrency, dryRun, excludeUsers)
 	},
 }
 
@@ -339,7 +361,7 @@ type signatureApplier interface {
 
 // processUsers applies signatures to users with concurrency control.
 func processUsers(ctx context.Context, logger *slog.Logger, tmpl *template.Template,
-	gmailClient signatureApplier, users []*models.User, concurrency int, dryRun bool) error {
+	gmailClient signatureApplier, users []*models.User, concurrency int, dryRun bool, excludeUsers []string) error {
 
 	type result struct {
 		email   string
@@ -347,6 +369,11 @@ func processUsers(ctx context.Context, logger *slog.Logger, tmpl *template.Templ
 		err     error
 		skipped bool
 		reason  string
+	}
+
+	exclude := make(map[string]bool, len(excludeUsers))
+	for _, email := range excludeUsers {
+		exclude[strings.ToLower(strings.TrimSpace(email))] = true
 	}
 
 	results := make(chan result, len(users))
@@ -363,6 +390,11 @@ func processUsers(ctx context.Context, logger *slog.Logger, tmpl *template.Templ
 		wg.Add(1)
 		go func(u *models.User) {
 			defer wg.Done()
+
+			if exclude[strings.ToLower(u.Email)] {
+				results <- result{email: u.Email, skipped: true, reason: "excluded via --exclude"}
+				return
+			}
 
 			// Acquire semaphore
 			sem <- struct{}{}

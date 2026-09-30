@@ -99,6 +99,18 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
+// loadCompanyConfig reads company-wide signature configuration from environment variables.
+func loadCompanyConfig() google.CompanyConfig {
+	return google.CompanyConfig{
+		Website:            os.Getenv("COMPANY_WEBSITE"),
+		Logo:               os.Getenv("COMPANY_LOGO"),
+		Phone:              os.Getenv("COMPANY_PHONE"),
+		Address:            os.Getenv("COMPANY_ADDRESS"),
+		PhoneLabel:         os.Getenv("COMPANY_PHONE_LABEL"),
+		InternalPhoneLabel: os.Getenv("COMPANY_INTERNAL_PHONE_LABEL"),
+	}
+}
+
 var validateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate the signature template",
@@ -156,12 +168,7 @@ or --all for the entire domain.`,
 		logger.Info("Authentication successful")
 
 		// Load company configuration from environment variables
-		companyConfig := google.CompanyConfig{
-			Website: os.Getenv("COMPANY_WEBSITE"),
-			Logo:    os.Getenv("COMPANY_LOGO"),
-			Phone:   os.Getenv("COMPANY_PHONE"),
-			Address: os.Getenv("COMPANY_ADDRESS"),
-		}
+		companyConfig := loadCompanyConfig()
 
 		// Create API clients
 		directoryClient := google.NewDirectoryClient(client.DirectoryService(), extractDomain(impersonateUser), companyConfig)
@@ -244,12 +251,7 @@ no Gmail changes are made).`,
 			return fmt.Errorf("failed to load template: %w", err)
 		}
 
-		companyConfig := google.CompanyConfig{
-			Website: os.Getenv("COMPANY_WEBSITE"),
-			Logo:    os.Getenv("COMPANY_LOGO"),
-			Phone:   os.Getenv("COMPANY_PHONE"),
-			Address: os.Getenv("COMPANY_ADDRESS"),
-		}
+		companyConfig := loadCompanyConfig()
 
 		var user *models.User
 		if previewSample {
@@ -319,6 +321,7 @@ func sampleUser(companyConfig google.CompanyConfig) *models.User {
 		JobTitle:       "Product Manager",
 		Organization:   "Example Corp",
 		Phone:          "+1-555-0100",
+		PhoneLabel:     companyConfig.PhoneLabel,
 		PhoneMobile:    "+1-555-0101",
 		OrgUnit:        "/Product",
 		CompanyWebsite: companyConfig.Website,

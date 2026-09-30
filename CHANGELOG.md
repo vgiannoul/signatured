@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Release binaries reporting `dev` as their version**: `release.yml` builds now inject the git
+  tag into `main.version` via `-ldflags`, matching what the Makefile already did for local builds
+
 ## [1.1.0] - 2026-09-30
 
 ### Added

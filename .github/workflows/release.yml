@@ -30,18 +30,20 @@ jobs:
       - name: Build binaries
         run: |
           mkdir -p dist
+          VERSION="${GITHUB_REF_NAME#v}"
+          LDFLAGS="-s -w -X main.version=${VERSION}"
 
           # macOS ARM64
-          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o dist/signatured-darwin-arm64 ./cmd/signatured
+          GOOS=darwin GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/signatured-darwin-arm64 ./cmd/signatured
 
           # macOS AMD64
-          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o dist/signatured-darwin-amd64 ./cmd/signatured
+          GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/signatured-darwin-amd64 ./cmd/signatured
 
           # Linux AMD64
-          GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o dist/signatured-linux-amd64 ./cmd/signatured
+          GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/signatured-linux-amd64 ./cmd/signatured
 
           # Windows AMD64
-          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/signatured-windows-amd64.exe ./cmd/signatured
+          GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/signatured-windows-amd64.exe ./cmd/signatured
 
       - name: Generate checksums
         run: |

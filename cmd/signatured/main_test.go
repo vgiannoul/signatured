@@ -17,6 +17,35 @@ import (
 	"github.com/vgiannoul/signatured/internal/template"
 )
 
+func TestLogTemplateSizeHandlesRemotePaths(t *testing.T) {
+	// Regression test: os.Stat can't resolve gs:// or https:// template
+	// paths and returns a nil FileInfo alongside the error. The original
+	// code discarded that error and called fileInfo.Size() unconditionally,
+	// panicking with a nil pointer dereference on every real `apply --template
+	// gs://...` run - validate/preview never exercised this code path, so
+	// it went uncaught until an actual deployment hit it.
+	logger := discardLogger()
+
+	tmpDir := t.TempDir()
+	localPath := filepath.Join(tmpDir, "template.md")
+	if err := os.WriteFile(localPath, []byte("hello"), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	paths := []string{
+		localPath,
+		"gs://bucket/template.md",
+		"https://storage.googleapis.com/bucket/template.md",
+		"/nonexistent/local/path.md",
+	}
+
+	for _, p := range paths {
+		t.Run(p, func(t *testing.T) {
+			logTemplateSize(logger, p) // must not panic
+		})
+	}
+}
+
 func TestExtractDomain(t *testing.T) {
 	tests := []struct {
 		email string

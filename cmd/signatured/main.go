@@ -175,9 +175,7 @@ or --all for the entire domain.`,
 			return fmt.Errorf("failed to load template: %w", err)
 		}
 
-		// Read template file to show size
-		fileInfo, _ := os.Stat(templatePath)
-		logger.Info("Template loaded", "size", fmt.Sprintf("%d bytes", fileInfo.Size()))
+		logTemplateSize(logger, templatePath)
 
 		// Create Google API client
 		ctx := context.Background()
@@ -489,6 +487,18 @@ func setupLogger(verbose bool) *slog.Logger {
 
 	handler := slog.NewTextHandler(os.Stderr, opts)
 	return slog.New(handler)
+}
+
+// logTemplateSize logs the template's local file size, when available.
+// Remote paths (gs://, https://) can't be stat'd locally - os.Stat returns
+// an error and a nil FileInfo for those, so this logs without a size
+// instead of dereferencing the nil result.
+func logTemplateSize(logger *slog.Logger, templatePath string) {
+	if fileInfo, err := os.Stat(templatePath); err == nil {
+		logger.Info("Template loaded", "size", fmt.Sprintf("%d bytes", fileInfo.Size()))
+	} else {
+		logger.Info("Template loaded")
+	}
 }
 
 // extractDomain extracts the domain from an email address.

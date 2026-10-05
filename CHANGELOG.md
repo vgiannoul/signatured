@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`apply` crashed on every `--template gs://...` or `--template https://...` run**: a
+  template-size log line called `os.Stat` on the template path to report its byte size, but
+  `os.Stat` can't resolve remote paths and returns a nil `FileInfo` alongside the error. The
+  error was discarded and `fileInfo.Size()` was called unconditionally, panicking with a nil
+  pointer dereference. `validate` and `preview` never hit this code path, so it went uncaught
+  until an actual deployment ran `apply` against a real `gs://` template.
+
 ## [1.2.0] - 2026-09-30
 
 ### Added
